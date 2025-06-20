@@ -1,0 +1,898 @@
+"use client";
+
+import type React from "react";
+
+import { useEffect, useState } from "react";
+import {
+  Sparkles,
+  Search,
+  Grid3X3,
+  List,
+  X,
+  SlidersHorizontal,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
+import Header from "@/components/header";
+
+// Mock data for filters and products
+const gameFilters = [
+  { id: "minecraft", name: "Minecraft", count: 3200 },
+  { id: "roblox", name: "Roblox", count: 2800 },
+  { id: "fivem", name: "FiveM", count: 1900 },
+  { id: "rust", name: "Rust", count: 1500 },
+];
+
+const categoryFilters = [
+  { id: "rgb", name: "RGB", count: 4200 },
+  { id: "minimal", name: "Minimal", count: 2800 },
+  { id: "professional", name: "Professional", count: 1900 },
+  { id: "budget", name: "Budget", count: 3500 },
+  { id: "premium", name: "Premium", count: 1600 },
+  { id: "streaming", name: "Streaming", count: 2200 },
+];
+
+const mockProducts = [
+  {
+    id: 1,
+    title: "Ultimate Minecraft RGB Battlestation",
+    imageUrl:
+      "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=600&h=400&fit=crop&q=80",
+    username: "NeonGamer",
+    userAvatar:
+      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=32&h=32&fit=crop&crop=face",
+    likes: 1247,
+    views: 12450,
+    tags: ["Minecraft", "RGB"],
+    price: 1299,
+    originalPrice: 1499,
+    uploadedAt: "2 hours ago",
+    rating: 4.8,
+    featured: true,
+    description:
+      "A vibrant RGB setup designed for ultimate Minecraft gaming with high-end peripherals and immersive lighting.",
+  },
+  {
+    id: 2,
+    title: "Roblox Creator Studio Setup",
+    imageUrl:
+      "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=600&h=400&fit=crop&q=80",
+    username: "CleanDesk",
+    userAvatar:
+      "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=32&h=32&fit=crop&crop=face",
+    likes: 892,
+    views: 7430,
+    tags: ["Roblox", "Minimal"],
+    price: 999,
+    uploadedAt: "5 hours ago",
+    rating: 4.6,
+    featured: false,
+    description:
+      "A clean and minimal desk setup optimized for Roblox game development and creator workflows.",
+  },
+  {
+    id: 3,
+    title: "Minecraft Modded Gaming Station",
+    imageUrl:
+      "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=400&fit=crop&q=80",
+    username: "CozyStreamer",
+    userAvatar:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face",
+    likes: 567,
+    views: 5210,
+    tags: ["Minecraft", "Cozy"],
+    price: 799,
+    uploadedAt: "1 day ago",
+    rating: 4.4,
+    featured: false,
+    description:
+      "A cozy gaming station tailored for modded Minecraft adventures with comfortable seating and ambient lighting.",
+  },
+  {
+    id: 4,
+    title: "Rust Survival Gaming Setup with Dual Monitors",
+    imageUrl:
+      "https://images.unsplash.com/photo-1547394765-185e1e68f34e?w=600&h=400&fit=crop&q=80",
+    username: "CreatorPro",
+    userAvatar:
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face",
+    likes: 2034,
+    views: 18470,
+    tags: ["Rust", "Professional"],
+    price: 1499,
+    uploadedAt: "3 hours ago",
+    rating: 4.9,
+    featured: true,
+    description:
+      "Professional-grade Rust gaming setup featuring dual monitors for enhanced visibility and productivity.",
+  },
+  {
+    id: 5,
+    title: "Roblox Kid's RGB Gaming Setup",
+    imageUrl:
+      "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&h=400&fit=crop&q=80",
+    username: "RetroKing",
+    userAvatar:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=32&h=32&fit=crop&crop=face",
+    likes: 1560,
+    views: 9820,
+    tags: ["Roblox", "Budget"],
+    price: 499,
+    uploadedAt: "6 hours ago",
+    rating: 4.2,
+    featured: false,
+    description:
+      "An affordable RGB gaming setup perfect for kids who love playing Roblox with style and comfort.",
+  },
+  {
+    id: 6,
+    title: "FiveM Roleplay Command Center",
+    imageUrl:
+      "https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=600&h=400&fit=crop&q=80",
+    username: "TechMaster",
+    userAvatar:
+      "https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?w=32&h=32&fit=crop&crop=face",
+    likes: 3240,
+    views: 26530,
+    tags: ["FiveM", "High-end"],
+    price: 1799,
+    uploadedAt: "4 hours ago",
+    rating: 4.7,
+    featured: true,
+    description:
+      "High-end command center built for FiveM roleplay enthusiasts with premium gear and immersive experience.",
+  },
+  {
+    id: 7,
+    title: "Minimalist Rust Gaming Setup",
+    imageUrl:
+      "https://images.unsplash.com/photo-1541746972996-4e0b0f93e586?w=600&h=400&fit=crop&q=80",
+    username: "WhiteSpace",
+    userAvatar:
+      "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=32&h=32&fit=crop&crop=face",
+    likes: 1890,
+    views: 15200,
+    tags: ["Rust", "Minimal"],
+    price: 1199,
+    uploadedAt: "1 day ago",
+    rating: 4.5,
+    featured: false,
+    description:
+      "A clean and minimalist gaming setup ideal for Rust players who prefer simplicity and performance.",
+  },
+  {
+    id: 8,
+    title: "Budget FiveM Racing Setup",
+    imageUrl:
+      "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&h=400&fit=crop&q=80",
+    username: "BudgetGamer",
+    userAvatar:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=32&h=32&fit=crop&crop=face",
+    likes: 2340,
+    views: 28900,
+    tags: ["FiveM", "Budget"],
+    price: 399,
+    uploadedAt: "2 days ago",
+    rating: 4.3,
+    featured: false,
+    description:
+      "A budget-friendly racing setup built for FiveM players looking for performance without breaking the bank.",
+  },
+];
+
+import { Heart, Star, Eye } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+export function ProductCard({
+  product,
+  viewMode,
+  onCardClick,
+}: {
+  product: any;
+  viewMode: "grid" | "list";
+  onCardClick: (id: number) => void;
+}) {
+  const [liked, setLiked] = useState(false);
+
+  const cardBase =
+    "transition-all duration-200 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md border border-border/30 shadow-lg hover:shadow-2xl hover:-translate-y-1 focus:ring-2 focus:ring-primary outline-none";
+  const featuredBadge =
+    "absolute top-3 left-3 bg-gradient-to-r from-green-500 to-emerald-400 text-white border-0 text-xs px-2 py-1 rounded shadow";
+
+  // Shared content block
+  const Content = () => (
+    <div className="flex flex-col h-full justify-between flex-1 min-w-0">
+      <div>
+        {/* Title */}
+        <h3 className="font-bold text-base md:text-lg text-foreground line-clamp-2 mb-1 hover:text-primary transition-colors">
+          {product.title}
+        </h3>
+        {/* Description */}
+        <p
+          className={`text-sm text-muted-foreground mb-2 ${
+            viewMode === "grid" ? "line-clamp-2" : "line-clamp-3"
+          }`}
+        >
+          {product.description}
+        </p>
+        {/* Tags */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {product.tags.map((tag: string) => (
+            <Badge
+              key={tag}
+              variant="secondary"
+              className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200"
+            >
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      </div>
+      {/* Price and Stats */}
+      <div className="flex flex-col gap-2 mt-auto">
+        <div className="font-bold text-lg md:text-xl text-primary">
+          ${product.price}
+          {product.originalPrice && (
+            <span className="text-xs text-muted-foreground line-through ml-2">
+              ${product.originalPrice}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Heart className="h-4 w-4" />
+            <span>{product.likes.toLocaleString()}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Eye className="h-4 w-4" />
+            <span>{product.views.toLocaleString()}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Star className="h-4 w-4 fill-current text-yellow-400" />
+            <span>{product.rating}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // --- GRID VIEW ---
+  if (viewMode === "grid") {
+    return (
+      <div
+        tabIndex={0}
+        onClick={() => onCardClick(product.id)}
+        className={`cursor-pointer flex flex-col rounded-2xl ${cardBase} h-full`}
+        aria-label={product.title}
+        style={{ minHeight: 400, maxHeight: 400 }}
+      >
+        {/* Image */}
+        <div className="relative w-full aspect-[16/9] rounded-t-2xl overflow-hidden group">
+          <img
+            src={product.imageUrl || "/placeholder.svg"}
+            alt={product.title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+          {/* Heart icon */}
+          <button
+            className="absolute top-3 right-3 p-2 rounded-full bg-white/80 text-primary hover:bg-primary hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow"
+            aria-label={liked ? "Unlike" : "Like"}
+            onClick={(e) => {
+              e.stopPropagation();
+              setLiked((l) => !l);
+            }}
+            type="button"
+          >
+            {liked ? (
+              <Heart className="h-5 w-5 fill-primary text-primary" />
+            ) : (
+              <Heart className="h-5 w-5" />
+            )}
+          </button>
+          {/* Featured badge */}
+          {product.featured && (
+            <Badge className={featuredBadge}>
+              <Star className="w-3 h-3 mr-1 inline" />
+              Featured
+            </Badge>
+          )}
+        </div>
+        <div className="flex-1 flex flex-col p-4">
+          <Content />
+        </div>
+      </div>
+    );
+  }
+
+  // --- LIST VIEW ---
+  return (
+    <div
+      tabIndex={0}
+      onClick={() => onCardClick(product.id)}
+      className={`cursor-pointer flex flex-row gap-6 p-4 rounded-2xl ${cardBase} min-h-[180px]`}
+      aria-label={product.title}
+    >
+      {/* Image */}
+      <div className="relative w-48 aspect-[16/9] rounded-xl overflow-hidden flex-shrink-0 group">
+        <img
+          src={product.imageUrl || "/placeholder.svg"}
+          alt={product.title}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+        {/* Heart icon */}
+        <button
+          className="absolute top-3 right-3 p-2 rounded-full bg-white/80 text-primary hover:bg-primary hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow"
+          aria-label={liked ? "Unlike" : "Like"}
+          onClick={(e) => {
+            e.stopPropagation();
+            setLiked((l) => !l);
+          }}
+          type="button"
+        >
+          {liked ? (
+            <Heart className="h-5 w-5 fill-primary text-primary" />
+          ) : (
+            <Heart className="h-5 w-5" />
+          )}
+        </button>
+        {/* Featured badge */}
+        {product.featured && (
+          <Badge className={featuredBadge}>
+            <Star className="w-3 h-3 mr-1 inline" />
+            Featured
+          </Badge>
+        )}
+      </div>
+      <div className="flex-1 flex flex-col justify-between min-w-0">
+        <Content />
+      </div>
+    </div>
+  );
+}
+export default function ExplorePage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [sortBy, setSortBy] = useState("popular");
+  const [priceRange, setPriceRange] = useState([0, 2000]);
+  const [selectedGames, setSelectedGames] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [products, setProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/products")
+      .then((res) => res.json())
+      .then(setProducts);
+  }, []);
+
+  const handleGameFilter = (gameId: string) => {
+    setSelectedGames((prev) =>
+      prev.includes(gameId)
+        ? prev.filter((id) => id !== gameId)
+        : [...prev, gameId]
+    );
+  };
+
+  const handleCategoryFilter = (categoryId: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
+  const clearAllFilters = () => {
+    setSelectedGames([]);
+    setSelectedCategories([]);
+    setPriceRange([0, 2000]);
+    setSearchQuery("");
+  };
+
+  const handleCardClick = (productId: number) => {
+    window.location.href = `/setup/${productId}`;
+  };
+
+  const handleHeartClick = (e: React.MouseEvent, productId: number) => {
+    e.stopPropagation();
+    console.log("Liked product:", productId);
+  };
+
+  // Filter and sort products
+  const filteredProducts = products.filter((product) => {
+    // Search filter
+    if (
+      searchQuery &&
+      !product.title.toLowerCase().includes(searchQuery.toLowerCase())
+    ) {
+      return false;
+    }
+
+    // Price filter
+    if (product.price < priceRange[0] || product.price > priceRange[1]) {
+      return false;
+    }
+
+    // Game filter
+    if (selectedGames.length > 0) {
+      const hasMatchingGame = product.tags.some((tag: string) =>
+        selectedGames.some((gameId) => {
+          const game = gameFilters.find((g) => g.id === gameId);
+          return game && tag.toLowerCase().includes(game.name.toLowerCase());
+        })
+      );
+      if (!hasMatchingGame) return false;
+    }
+
+    // Category filter
+    if (selectedCategories.length > 0) {
+      const hasMatchingCategory = product.tags.some((tag: string) =>
+        selectedCategories.some((categoryId) => {
+          const category = categoryFilters.find((c) => c.id === categoryId);
+          return (
+            category && tag.toLowerCase().includes(category.name.toLowerCase())
+          );
+        })
+      );
+      if (!hasMatchingCategory) return false;
+    }
+
+    return true;
+  });
+
+  // Sort products
+  const sortedAndFilteredProducts = [...filteredProducts].sort((a, b) => {
+    // Always show featured first
+    if (a.featured && !b.featured) return -1;
+    if (!a.featured && b.featured) return 1;
+
+    // Then apply secondary sorting
+    switch (sortBy) {
+      case "newest":
+        return (
+          new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+        );
+      case "price-low":
+        return a.price - b.price;
+      case "price-high":
+        return b.price - a.price;
+      case "rating":
+        return b.rating - a.rating;
+      case "popular":
+      default:
+        return b.likes - a.likes;
+    }
+  });
+
+  const activeFiltersCount =
+    selectedGames.length +
+    selectedCategories.length +
+    (priceRange[0] > 0 || priceRange[1] < 2000 ? 1 : 0) +
+    (searchQuery ? 1 : 0);
+
+  return (
+    <div className="min-h-screen bg-background font-sans">
+      {/* Header */}
+      <Header />
+
+      {/* Breadcrumbs */}
+      <div className="border-b border-border/40 bg-muted/20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex items-center text-sm text-muted-foreground">
+            <span className="hover:text-foreground cursor-pointer">Home</span>
+            <span className="mx-2">/</span>
+            <span className="text-foreground font-medium">Explore Setups</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex gap-8">
+          {/* Sidebar Filters - Desktop */}
+          <div className="hidden lg:block w-80 flex-shrink-0">
+            <div className="sticky top-24 space-y-6">
+              {/* Search */}
+              <div>
+                <h3 className="font-semibold text-foreground mb-3 font-display">
+                  Search
+                </h3>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="Search setups..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              {/* Price Range */}
+              <div>
+                <h3 className="font-semibold text-foreground mb-3 font-display">
+                  Price Range
+                </h3>
+                <div className="px-2">
+                  <Slider
+                    value={priceRange}
+                    onValueChange={setPriceRange}
+                    max={2000}
+                    min={0}
+                    step={50}
+                    className="mb-4"
+                  />
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>${priceRange[0]}</span>
+                    <span>${priceRange[1]}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Games Filter */}
+              <div>
+                <h3 className="font-semibold text-foreground mb-3 font-display">
+                  Games
+                </h3>
+                <div className="space-y-2">
+                  {gameFilters.map((game) => (
+                    <div key={game.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={game.id}
+                        checked={selectedGames.includes(game.id)}
+                        onCheckedChange={() => handleGameFilter(game.id)}
+                      />
+                      <label
+                        htmlFor={game.id}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                      >
+                        {game.name}
+                      </label>
+                      <span className="text-xs text-muted-foreground">
+                        {game.count.toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Categories Filter */}
+              <div>
+                <h3 className="font-semibold text-foreground mb-3 font-display">
+                  Categories
+                </h3>
+                <div className="space-y-2">
+                  {categoryFilters.map((category) => (
+                    <div
+                      key={category.id}
+                      className="flex items-center space-x-2"
+                    >
+                      <Checkbox
+                        id={category.id}
+                        checked={selectedCategories.includes(category.id)}
+                        onCheckedChange={() =>
+                          handleCategoryFilter(category.id)
+                        }
+                      />
+                      <label
+                        htmlFor={category.id}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                      >
+                        {category.name}
+                      </label>
+                      <span className="text-xs text-muted-foreground">
+                        {category.count.toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Clear Filters */}
+              {activeFiltersCount > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={clearAllFilters}
+                  className="w-full"
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Clear All Filters ({activeFiltersCount})
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
+            {/* Top Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-4">
+                <h2 className="text-2xl font-bold text-foreground font-display">
+                  Explore Setups
+                </h2>
+                <span className="text-muted-foreground">
+                  {sortedAndFilteredProducts.length.toLocaleString()} results
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {/* Mobile Filter Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="lg:hidden"
+                  onClick={() => setShowMobileFilters(true)}
+                >
+                  <SlidersHorizontal className="mr-2 h-4 w-4" />
+                  Filters
+                  {activeFiltersCount > 0 && (
+                    <Badge
+                      variant="secondary"
+                      className="ml-2 h-5 w-5 p-0 text-xs"
+                    >
+                      {activeFiltersCount}
+                    </Badge>
+                  )}
+                </Button>
+
+                {/* Sort */}
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="popular">Most Popular</SelectItem>
+                    <SelectItem value="newest">Newest</SelectItem>
+                    <SelectItem value="price-low">
+                      Price: Low to High
+                    </SelectItem>
+                    <SelectItem value="price-high">
+                      Price: High to Low
+                    </SelectItem>
+                    <SelectItem value="rating">Highest Rated</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* View Toggle */}
+                <div className="flex border border-border rounded-lg p-1">
+                  <Button
+                    variant={viewMode === "grid" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("grid")}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Grid3X3 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "list" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("list")}
+                    className="h-8 w-8 p-0"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Active Filters */}
+            {activeFiltersCount > 0 && (
+              <div className="flex flex-wrap gap-2 mb-6">
+                {selectedGames.map((gameId) => {
+                  const game = gameFilters.find((g) => g.id === gameId);
+                  return (
+                    <Badge key={gameId} variant="secondary" className="gap-1">
+                      {game?.name}
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => handleGameFilter(gameId)}
+                      />
+                    </Badge>
+                  );
+                })}
+                {selectedCategories.map((categoryId) => {
+                  const category = categoryFilters.find(
+                    (c) => c.id === categoryId
+                  );
+                  return (
+                    <Badge
+                      key={categoryId}
+                      variant="secondary"
+                      className="gap-1"
+                    >
+                      {category?.name}
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => handleCategoryFilter(categoryId)}
+                      />
+                    </Badge>
+                  );
+                })}
+                {(priceRange[0] > 0 || priceRange[1] < 2000) && (
+                  <Badge variant="secondary" className="gap-1">
+                    ${priceRange[0]} - ${priceRange[1]}
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => setPriceRange([0, 2000])}
+                    />
+                  </Badge>
+                )}
+              </div>
+            )}
+
+            {/* Products Grid */}
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
+                  : "space-y-4"
+              }
+            >
+              {sortedAndFilteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  viewMode={viewMode}
+                  onCardClick={handleCardClick}
+                />
+              ))}
+            </div>
+
+            {/* Load More */}
+            <div className="text-center mt-12">
+              <Button variant="outline" size="lg" className="px-8">
+                Load More Results
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Filters Overlay */}
+      {showMobileFilters && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setShowMobileFilters(false)}
+          />
+          <div className="fixed right-0 top-0 h-full w-80 bg-background border-l border-border overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold font-display">Filters</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowMobileFilters(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Mobile filter content - same as desktop sidebar */}
+              <div className="space-y-6">
+                {/* Search */}
+                <div>
+                  <h4 className="font-semibold text-foreground mb-3 font-display">
+                    Search
+                  </h4>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      placeholder="Search setups..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                {/* Price Range */}
+                <div>
+                  <h4 className="font-semibold text-foreground mb-3 font-display">
+                    Price Range
+                  </h4>
+                  <div className="px-2">
+                    <Slider
+                      value={priceRange}
+                      onValueChange={setPriceRange}
+                      max={2000}
+                      min={0}
+                      step={50}
+                      className="mb-4"
+                    />
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>${priceRange[0]}</span>
+                      <span>${priceRange[1]}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Games Filter */}
+                <div>
+                  <h4 className="font-semibold text-foreground mb-3 font-display">
+                    Games
+                  </h4>
+                  <div className="space-y-2">
+                    {gameFilters.map((game) => (
+                      <div
+                        key={game.id}
+                        className="flex items-center space-x-2"
+                      >
+                        <Checkbox
+                          id={`mobile-${game.id}`}
+                          checked={selectedGames.includes(game.id)}
+                          onCheckedChange={() => handleGameFilter(game.id)}
+                        />
+                        <label
+                          htmlFor={`mobile-${game.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                        >
+                          {game.name}
+                        </label>
+                        <span className="text-xs text-muted-foreground">
+                          {game.count.toLocaleString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Categories Filter */}
+                <div>
+                  <h4 className="font-semibold text-foreground mb-3 font-display">
+                    Categories
+                  </h4>
+                  <div className="space-y-2">
+                    {categoryFilters.map((category) => (
+                      <div
+                        key={category.id}
+                        className="flex items-center space-x-2"
+                      >
+                        <Checkbox
+                          id={`mobile-${category.id}`}
+                          checked={selectedCategories.includes(category.id)}
+                          onCheckedChange={() =>
+                            handleCategoryFilter(category.id)
+                          }
+                        />
+                        <label
+                          htmlFor={`mobile-${category.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                        >
+                          {category.name}
+                        </label>
+                        <span className="text-xs text-muted-foreground">
+                          {category.count.toLocaleString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Clear Filters */}
+                {activeFiltersCount > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={clearAllFilters}
+                    className="w-full"
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Clear All Filters ({activeFiltersCount})
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
