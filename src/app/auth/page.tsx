@@ -51,7 +51,7 @@ export default function AuthPage() {
                   {
                     provider: "discord",
 
-                    callbackURL: "/dashboard",
+                    callbackURL: "/",
                   },
 
                   {
