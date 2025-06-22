@@ -252,7 +252,7 @@ export default function Header() {
               SkriptStore
             </h1>
             <h1 className="text-lg font-bold text-foreground font-display sm:hidden">
-              SS
+              SkriptStore
             </h1>
           </Link>
 
