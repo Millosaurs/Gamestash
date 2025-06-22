@@ -340,7 +340,7 @@ export default function AccountsPage() {
                                   ${parseFloat(product.price).toLocaleString()}
                                 </p>
                                 <div className="flex gap-2 mt-2">
-                                  <Link href={`/setup/${product.id}`}>
+                                  <Link href={`/product/${product.id}`}>
                                     <Button size="sm" variant="outline">
                                       <Eye className="w-3 h-3 mr-1" />
                                       View

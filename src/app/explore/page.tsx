@@ -197,7 +197,7 @@ export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState("popular");
-  const [priceRange, setPriceRange] = useState([0, 2000]);
+  const [priceRange, setPriceRange] = useState([0, 10000]);
   const [selectedGames, setSelectedGames] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -383,17 +383,6 @@ export default function ExplorePage() {
     <div className="min-h-screen bg-background font-sans">
       {/* Header */}
       <Header />
-
-      {/* Breadcrumbs */}
-      <div className="border-b border-border/40 bg-muted/20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex items-center text-sm text-muted-foreground">
-            <span className="hover:text-foreground cursor-pointer">Home</span>
-            <span className="mx-2">/</span>
-            <span className="text-foreground font-medium">Explore Setups</span>
-          </div>
-        </div>
-      </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-8">

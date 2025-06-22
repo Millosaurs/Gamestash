@@ -1,4 +1,5 @@
-import { Badge, Heart, Eye, Star } from "lucide-react";
+import { Heart, Eye, Star } from "lucide-react";
+import { Badge } from "@/components/ui/badge"; // <-- Correct import
 import { useState } from "react";
 
 export function ProductCard({
@@ -16,18 +17,13 @@ export function ProductCard({
 
   const handleLikeClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-
     if (isLiking) return;
-
     setIsLiking(true);
-
     try {
       const response = await fetch(`/api/products/${product.id}/like`, {
         method: "POST",
       });
-
       const result = await response.json();
-
       if (result.success) {
         setLiked(result.liked);
         setLikeCount((prev: number) => (result.liked ? prev + 1 : prev - 1));
@@ -46,15 +42,12 @@ export function ProductCard({
   const featuredBadge =
     "absolute top-3 left-3 bg-gradient-to-r from-green-500 to-emerald-400 text-white border-0 text-xs px-2 py-1 rounded shadow";
 
-  // Shared content block
   const Content = () => (
     <div className="flex flex-col h-full justify-between flex-1 min-w-0">
       <div>
-        {/* Title */}
         <h3 className="font-bold text-base md:text-lg text-foreground line-clamp-2 mb-1 hover:text-primary transition-colors">
           {product.title}
         </h3>
-        {/* Description */}
         <p
           className={`text-sm text-muted-foreground mb-2 ${
             viewMode === "grid" ? "line-clamp-2" : "line-clamp-3"
@@ -62,9 +55,8 @@ export function ProductCard({
         >
           {product.description}
         </p>
-        {/* Tags */}
         <div className="flex flex-wrap gap-1.5 mb-3">
-          {product.tags.map((tag: string) => (
+          {product.tags?.map((tag: string) => (
             <Badge
               key={tag}
               className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200"
@@ -74,7 +66,6 @@ export function ProductCard({
           ))}
         </div>
       </div>
-      {/* Price and Stats */}
       <div className="flex flex-col gap-2 mt-auto">
         <div className="font-bold text-lg md:text-xl text-primary">
           ${product.price}
@@ -91,11 +82,11 @@ export function ProductCard({
           </div>
           <div className="flex items-center gap-1">
             <Eye className="h-4 w-4" />
-            <span>{product.views.toLocaleString()}</span>
+            <span>{product.views?.toLocaleString() ?? 0}</span>
           </div>
           <div className="flex items-center gap-1">
             <Star className="h-4 w-4 fill-current text-yellow-400" />
-            <span>{product.rating}</span>
+            <span>{product.rating ?? 0}</span>
           </div>
         </div>
       </div>
@@ -115,7 +106,7 @@ export function ProductCard({
         {/* Image */}
         <div className="relative w-full aspect-[16/9] rounded-t-2xl overflow-hidden group">
           <img
-            src={product.imageUrl || "/placeholder.svg"}
+            src={product.imageUrl || product.thumbnail || "/placeholder.svg"}
             alt={product.title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
@@ -159,7 +150,7 @@ export function ProductCard({
       {/* Image */}
       <div className="relative w-48 aspect-[16/9] rounded-xl overflow-hidden flex-shrink-0 group">
         <img
-          src={product.imageUrl || "/placeholder.svg"}
+          src={product.imageUrl || product.thumbnail || "/placeholder.svg"}
           alt={product.title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
