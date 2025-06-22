@@ -10,7 +10,7 @@ import {
   productSales,
   productViews,
 } from "@/db/schema";
-import { eq, desc, and, sql, count, gte, sum } from "drizzle-orm";
+import { eq, desc, and, sql, count, gte, sum, lte } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -616,20 +616,41 @@ export async function getProductAnalytics(
     startDate.setDate(startDate.getDate() - days);
 
     // Generate daily stats (mock data for now - replace with actual tracking)
-    const dailyStats = [];
+    const dailyStats = await db
+      .select({
+        date: dailyAnalytics.date,
+        views: dailyAnalytics.views,
+        likes: dailyAnalytics.likes,
+        sales: dailyAnalytics.sales,
+        revenue: dailyAnalytics.revenue,
+      })
+      .from(dailyAnalytics)
+      .where(
+        and(
+          eq(dailyAnalytics.productId, productId),
+          gte(dailyAnalytics.date, startDate)
+        )
+      )
+      .orderBy(dailyAnalytics.date);
+
+    // Fill in missing dates with zeros
+    const filledStats = [];
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
 
-      dailyStats.push({
+      const existingStat = dailyStats.find(
+        (stat) => new Date(stat.date).toDateString() === date.toDateString()
+      );
+
+      filledStats.push({
         date: date.toISOString().split("T")[0],
-        views: Math.floor(Math.random() * 50),
-        likes: Math.floor(Math.random() * 10),
-        sales: Math.floor(Math.random() * 3),
-        revenue: Math.floor(Math.random() * 30),
+        views: existingStat?.views || 0,
+        likes: existingStat?.likes || 0,
+        sales: existingStat?.sales || 0,
+        revenue: parseFloat(existingStat?.revenue || "0"),
       });
     }
-
     // Get total stats from product table
     const totalStats = {
       totalViews: product[0].views || 0,
@@ -638,21 +659,27 @@ export async function getProductAnalytics(
     };
 
     // Get recent views (mock data for now)
-    const recentViews = Array.from({ length: 10 }, (_, i) => ({
-      id: `view-${i}`,
-      userId: null,
-      userName: `User ${i + 1}`,
-      userImage: null,
-      ipAddress: `192.168.1.${i + 1}`,
-      referrer: i % 3 === 0 ? "https://google.com" : null,
-      createdAt: new Date(Date.now() - i * 3600000).toISOString(),
-    }));
+    const recentViews = await db
+      .select({
+        id: productViews.id,
+        userId: productViews.userId,
+        userName: user.name,
+        userImage: user.image,
+        ipAddress: productViews.ipAddress,
+        referrer: productViews.referrer,
+        createdAt: productViews.createdAt,
+      })
+      .from(productViews)
+      .leftJoin(user, eq(productViews.userId, user.id))
+      .where(eq(productViews.productId, productId))
+      .orderBy(desc(productViews.createdAt))
+      .limit(10);
 
     return {
       success: true,
       data: {
         product: product[0],
-        dailyStats,
+        dailyStats: filledStats, // Use filledStats instead of dailyStats
         totalStats,
         recentViews,
       },
@@ -697,23 +724,41 @@ export async function getUserDashboardAnalytics(days: number = 30) {
       .orderBy(desc(products.createdAt));
 
     // Generate daily stats from the date range (mock data for now)
+    const dailyStatsRaw = await db
+      .select({
+        date: dailyAnalytics.date,
+        views: sum(dailyAnalytics.views).as("views"),
+        likes: sum(dailyAnalytics.likes).as("likes"),
+        sales: sum(dailyAnalytics.sales).as("sales"),
+        revenue: sum(dailyAnalytics.revenue).as("revenue"),
+      })
+      .from(dailyAnalytics)
+      .innerJoin(products, eq(dailyAnalytics.productId, products.id))
+      .where(
+        and(
+          eq(products.userId, session.user.id),
+          gte(dailyAnalytics.date, startDate)
+        )
+      )
+      .groupBy(dailyAnalytics.date)
+      .orderBy(dailyAnalytics.date);
+
+    // Fill in missing dates with zeros
     const dailyStats = [];
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
 
-      // Calculate daily totals from products (simplified approach)
-      const dayViews = Math.floor(Math.random() * 100); // Replace with actual daily tracking
-      const dayLikes = Math.floor(Math.random() * 20);
-      const daySales = Math.floor(Math.random() * 5);
-      const dayRevenue = daySales * 10; // Simplified calculation
+      const existingStat = dailyStatsRaw.find(
+        (stat) => new Date(stat.date).toDateString() === date.toDateString()
+      );
 
       dailyStats.push({
         date: date.toISOString().split("T")[0],
-        views: dayViews,
-        likes: dayLikes,
-        sales: daySales,
-        revenue: dayRevenue,
+        views: Number(existingStat?.views || 0),
+        likes: Number(existingStat?.likes || 0),
+        sales: Number(existingStat?.sales || 0),
+        revenue: Number(existingStat?.revenue || 0),
       });
     }
 
@@ -760,5 +805,76 @@ export async function getUserDashboardAnalytics(days: number = 30) {
   } catch (error) {
     console.error("Error fetching dashboard analytics:", error);
     return { success: false, error: "Failed to fetch analytics" };
+  }
+}
+
+export async function aggregateDailyStats(targetDate?: string) {
+  const date = targetDate || new Date().toISOString().split("T")[0];
+  const startOfDay = new Date(date + "T00:00:00Z");
+  const endOfDay = new Date(date + "T23:59:59Z");
+
+  // Get all products to aggregate
+  const allProducts = await db.select({ id: products.id }).from(products);
+
+  for (const product of allProducts) {
+    // Count views for this product on this date
+    const viewsCount = await db
+      .select({ count: count() })
+      .from(productViews)
+      .where(
+        and(
+          eq(productViews.productId, product.id),
+          gte(productViews.createdAt, startOfDay),
+          lte(productViews.createdAt, endOfDay)
+        )
+      );
+
+    // Count likes for this product on this date
+    const likesCount = await db
+      .select({ count: count() })
+      .from(productLikes)
+      .where(
+        and(
+          eq(productLikes.productId, product.id),
+          gte(productLikes.createdAt, startOfDay),
+          lte(productLikes.createdAt, endOfDay)
+        )
+      );
+
+    // Count sales for this product on this date
+    const salesData = await db
+      .select({
+        count: count(),
+        revenue: sum(productSales.amount),
+      })
+      .from(productSales)
+      .where(
+        and(
+          eq(productSales.productId, product.id),
+          gte(productSales.createdAt, startOfDay),
+          lte(productSales.createdAt, endOfDay)
+        )
+      );
+
+    // Insert or update daily analytics
+    await db
+      .insert(dailyAnalytics)
+      .values({
+        date: startOfDay,
+        productId: product.id,
+        views: viewsCount[0].count,
+        likes: likesCount[0].count,
+        sales: salesData[0].count,
+        revenue: salesData[0].revenue || "0.00",
+      })
+      .onConflictDoUpdate({
+        target: [dailyAnalytics.date, dailyAnalytics.productId],
+        set: {
+          views: viewsCount[0].count,
+          likes: likesCount[0].count,
+          sales: salesData[0].count,
+          revenue: salesData[0].revenue || "0.00",
+        },
+      });
   }
 }

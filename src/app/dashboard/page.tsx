@@ -148,7 +148,7 @@ export default function DashboardPage() {
   };
 
   const handlePreviewProduct = (productId: string) => {
-    window.open(`/setup/${productId}`, "_blank");
+    window.open(`/dashboard/products/${productId}`, "_blank");
   };
 
   const handleViewProduct = (productId: string) => {
