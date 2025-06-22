@@ -194,11 +194,7 @@ const getDeveloperById = (id: string) => {
 
 import { ProductCard } from "@/components/product-card";
 
-type PageProps = {
-  params: { id: string };
-};
-
-export default function DeveloperDetailPage(props: PageProps) {
+export default function DeveloperDetailPage(props: { params: { id: string } }) {
   const { params } = props;
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const developer = getDeveloperById(params.id);
