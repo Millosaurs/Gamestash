@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/sidebar";
 import { signOut, useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import router from "next/router";
 
 export type NavUserProps = {
   user: {
@@ -38,7 +37,7 @@ export type NavUserProps = {
     createdAt: Date;
     updatedAt: Date;
     image?: string | null;
-    avatar?: string | null; // if you use avatar elsewhere
+    avatar?: string | null;
   };
 };
 
@@ -135,13 +134,13 @@ export function NavUser({ user }: NavUserProps) {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut
-                onClick={() => {
-                  signOut();
-                  router.push("/");
-                }}
-              />
+            <DropdownMenuItem
+              onClick={() => {
+                signOut();
+                router.push("/");
+              }}
+            >
+              <LogOut />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
