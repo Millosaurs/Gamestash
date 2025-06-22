@@ -1,6 +1,7 @@
+// app/dashboard/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Sparkles,
   Plus,
@@ -31,8 +32,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Header from "@/components/header";
 import {
   Dialog,
   DialogContent,
@@ -42,73 +41,75 @@ import {
 import { NewProductForm } from "@/components/product-comp/new-product";
 import { EditProductForm } from "@/components/product-comp/edit-product";
 import { SiteHeader } from "@/components/sidebar/site-header";
-
-// Mock user data
-const user = {
-  name: "Alex Chen",
-  email: "alex@example.com",
-  avatar:
-    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face",
-  totalProducts: 12,
-  totalSales: 89,
-  totalRevenue: 15420,
-  totalViews: 125000,
-};
-
-// Mock products data
-const mockProducts = [
-  {
-    id: 1,
-    title: "Ultimate Minecraft RGB Battlestation",
-    thumbnail:
-      "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=300&h=200&fit=crop&q=80",
-    price: 1299,
-    status: "published",
-    views: 12450,
-    likes: 1247,
-    sales: 23,
-    tags: ["Minecraft", "RGB", "Gaming"],
-    createdAt: "2024-01-15",
-    updatedAt: "2024-01-20",
-  },
-  {
-    id: 2,
-    title: "Minimalist Workspace Setup",
-    thumbnail:
-      "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=300&h=200&fit=crop&q=80",
-    price: 999,
-    status: "draft",
-    views: 0,
-    likes: 0,
-    sales: 0,
-    tags: ["Minimal", "Workspace", "Clean"],
-    createdAt: "2024-01-18",
-    updatedAt: "2024-01-18",
-  },
-  {
-    id: 3,
-    title: "Rust Gaming Command Center",
-    thumbnail:
-      "https://images.unsplash.com/photo-1547394765-185e1e68f34e?w=300&h=200&fit=crop&q=80",
-    price: 1599,
-    status: "published",
-    views: 8920,
-    likes: 892,
-    sales: 15,
-    tags: ["Rust", "Gaming", "Professional"],
-    createdAt: "2024-01-10",
-    updatedAt: "2024-01-22",
-  },
-];
+import {
+  getUserProducts,
+  getUserStats,
+  deleteProduct,
+} from "@/lib/actions/products";
+import { useSession } from "@/lib/auth-client";
+import { Product, UserStats } from "@/lib/types/product";
+import { toast } from "sonner";
+import Link from "next/link";
 
 export default function DashboardPage() {
+  const { data: session, isPending } = useSession();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [userStats, setUserStats] = useState<UserStats>({
+    totalProducts: 0,
+    totalViews: 0,
+    totalLikes: 0,
+    totalSales: 0,
+    totalRevenue: 0,
+  });
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [editProductId, setEditProductId] = useState<number | null>(null);
+  const [editProductId, setEditProductId] = useState<string | null>(null);
 
-  const filteredProducts = mockProducts.filter((product) => {
+  useEffect(() => {
+    async function fetchData() {
+      if (!session?.user) return;
+
+      setLoading(true);
+      try {
+        const [productsResult, statsResult] = await Promise.all([
+          getUserProducts(),
+          getUserStats(),
+        ]);
+
+        if (productsResult.success) {
+          setProducts(productsResult.data || []);
+        } else {
+          toast.error(productsResult.error || "Failed to fetch products");
+        }
+
+        if (statsResult.success) {
+          setUserStats(
+            statsResult.data || {
+              totalProducts: 0,
+              totalViews: 0,
+              totalLikes: 0,
+              totalSales: 0,
+              totalRevenue: 0,
+            }
+          );
+        } else {
+          toast.error(statsResult.error || "Failed to fetch stats");
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        toast.error("An unexpected error occurred");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [session]);
+
+  const filteredProducts = products.filter((product) => {
     const matchesSearch = product.title
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
@@ -117,29 +118,80 @@ export default function DashboardPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleEditProduct = (productId: number) => {
+  const handleEditProduct = (productId: string) => {
     setEditProductId(productId);
     setEditOpen(true);
   };
 
-  const handleDeleteProduct = (productId: number) => {
-    // Handle delete logic
-    console.log("Delete product:", productId);
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm("Are you sure you want to delete this product?")) {
+      return;
+    }
+
+    try {
+      const result = await deleteProduct(productId);
+
+      if (result.success) {
+        toast.success("Product deleted successfully");
+        // Refresh the products list
+        const productsResult = await getUserProducts();
+        if (productsResult.success) {
+          setProducts(productsResult.data || []);
+        }
+      } else {
+        toast.error(result.error || "Failed to delete product");
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      toast.error("An unexpected error occurred");
+    }
   };
 
-  const handlePreviewProduct = (productId: number) => {
-    window.location.href = `/setup/${productId}`;
+  const handlePreviewProduct = (productId: string) => {
+    window.open(`/setup/${productId}`, "_blank");
   };
+
+  const handleViewProduct = (productId: string) => {
+    window.location.href = `/dashboard/products/${productId}`;
+  };
+
+  // Show loading state
+  if (isPending || loading) {
+    return (
+      <>
+        <SiteHeader />
+        <div className="min-h-screen bg-background font-sans">
+          <div className="max-w-9xl px-4 sm:px-6 lg:px-8 py-8">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="h-32 bg-gray-200 rounded"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Redirect if not authenticated
+  if (!session?.user) {
+    window.location.href = "/login";
+    return null;
+  }
 
   return (
     <>
       <SiteHeader />
       <div className="min-h-screen bg-background font-sans">
-        <div className=" max-w-9xl px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-9xl px-4 sm:px-6 lg:px-8 py-8">
           {/* Welcome Section */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2 font-display">
-              Welcome back, {user.name}!
+              Welcome back, {session.user.name}!
             </h1>
             <p className="text-muted-foreground">
               Manage your gaming setups and track your performance.
@@ -157,10 +209,10 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold font-display">
-                  {user.totalProducts}
+                  {userStats.totalProducts}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  +2 from last month
+                  Your listed products
                 </p>
               </CardContent>
             </Card>
@@ -173,11 +225,9 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold font-display">
-                  {user.totalSales}
+                  {userStats.totalSales}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  +12% from last month
-                </p>
+                <p className="text-xs text-muted-foreground">Products sold</p>
               </CardContent>
             </Card>
             <Card>
@@ -187,11 +237,9 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold font-display">
-                  ${user.totalRevenue.toLocaleString()}
+                  ${userStats.totalRevenue.toLocaleString()}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  +8% from last month
-                </p>
+                <p className="text-xs text-muted-foreground">Total earnings</p>
               </CardContent>
             </Card>
             <Card>
@@ -203,11 +251,11 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold font-display">
-                  {Math.round(user.totalViews / 1000)}k
+                  {userStats.totalViews > 1000
+                    ? `${Math.round(userStats.totalViews / 1000)}k`
+                    : userStats.totalViews}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  +15% from last month
-                </p>
+                <p className="text-xs text-muted-foreground">Profile views</p>
               </CardContent>
             </Card>
           </div>
@@ -222,36 +270,66 @@ export default function DashboardPage() {
                     Manage and track your gaming setup listings
                   </p>
                 </div>
-                <Dialog open={open} onOpenChange={setOpen}>
-                  <DialogTrigger asChild>
-                    <Button onClick={() => setOpen(true)}>
-                      Create New Product
+                <div className="flex gap-2">
+                  <Link href="/dashboard/analytics">
+                    <Button variant="outline">
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      Analytics
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent
-                    className="
-    w-full
-    max-w-lg
-    sm:max-w-2xl
-    md:max-w-3xl
-    lg:max-w-5xl
-    xl:max-w-6xl
-    max-h-[90vh]
-    p-0
-    rounded-xl
-    bg-background
-    shadow-lg
-    flex flex-col
-  "
-                  >
-                    <DialogTitle className="px-6 pt-6">
-                      Create New Product
-                    </DialogTitle>
-                    <div className="flex-1 overflow-y-auto p-6">
-                      <NewProductForm onClose={() => setOpen(false)} />
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                  </Link>
+                  <Dialog open={open} onOpenChange={setOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => setOpen(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create New Product
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent
+                      className="
+                        w-full
+                        max-w-lg
+                        sm:max-w-2xl
+                        md:max-w-3xl
+                        lg:max-w-5xl
+                        xl:max-w-6xl
+                        max-h-[90vh]
+                        p-0
+                        rounded-xl
+                        bg-background
+                        shadow-lg
+                        flex flex-col
+                      "
+                    >
+                      <DialogTitle className="px-6 pt-6">
+                        Create New Product
+                      </DialogTitle>
+                      <div className="flex-1 overflow-y-auto p-6">
+                        <NewProductForm
+                          onClose={() => {
+                            setOpen(false);
+                            // Refresh data after creating
+                            getUserProducts().then((result) => {
+                              if (result.success)
+                                setProducts(result.data || []);
+                            });
+                            getUserStats().then((result) => {
+                              if (result.success)
+                                setUserStats(
+                                  result.data || {
+                                    totalProducts: 0,
+                                    totalViews: 0,
+                                    totalLikes: 0,
+                                    totalSales: 0,
+                                    totalRevenue: 0,
+                                  }
+                                );
+                            });
+                          }}
+                        />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -329,21 +407,23 @@ export default function DashboardPage() {
                                   {product.title}
                                 </div>
                                 <div className="flex flex-wrap gap-1 mt-1">
-                                  {product.tags.slice(0, 2).map((tag) => (
+                                  {(product.tags || [])
+                                    .slice(0, 2)
+                                    .map((tag) => (
+                                      <Badge
+                                        key={tag}
+                                        variant="secondary"
+                                        className="text-xs"
+                                      >
+                                        {tag}
+                                      </Badge>
+                                    ))}
+                                  {(product.tags || []).length > 2 && (
                                     <Badge
-                                      key={tag}
                                       variant="secondary"
                                       className="text-xs"
                                     >
-                                      {tag}
-                                    </Badge>
-                                  ))}
-                                  {product.tags.length > 2 && (
-                                    <Badge
-                                      variant="secondary"
-                                      className="text-xs"
-                                    >
-                                      +{product.tags.length - 2}
+                                      +{(product.tags || []).length - 2}
                                     </Badge>
                                   )}
                                 </div>
@@ -359,7 +439,7 @@ export default function DashboardPage() {
                               }
                               className={
                                 product.status === "published"
-                                  ? "bg-primary text-primary-foreground"
+                                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                                   : ""
                               }
                             >
@@ -367,16 +447,16 @@ export default function DashboardPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right font-medium">
-                            ${product.price}
+                            ${parseFloat(product.price).toLocaleString()}
                           </TableCell>
                           <TableCell className="text-right hidden sm:table-cell">
-                            {product.views.toLocaleString()}
+                            {(product.views || 0).toLocaleString()}
                           </TableCell>
                           <TableCell className="text-right hidden sm:table-cell">
-                            {product.likes.toLocaleString()}
+                            {(product.likes || 0).toLocaleString()}
                           </TableCell>
                           <TableCell className="text-right hidden md:table-cell">
-                            {product.sales}
+                            {product.sales || 0}
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
@@ -386,6 +466,12 @@ export default function DashboardPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => handleViewProduct(product.id)}
+                                >
+                                  <TrendingUp className="mr-2 h-4 w-4" />
+                                  View Analytics
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() =>
                                     handlePreviewProduct(product.id)
@@ -431,11 +517,7 @@ export default function DashboardPage() {
                       : "Get started by creating your first product."}
                   </p>
                   {!searchQuery && (
-                    <Button
-                      onClick={() =>
-                        (window.location.href = "/dashboard/products/new")
-                      }
-                    >
+                    <Button onClick={() => setOpen(true)}>
                       <Plus className="w-4 h-4 mr-2" />
                       Add Your First Product
                     </Button>
@@ -445,29 +527,48 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
           <DialogContent
             className="
-            w-full
-            max-w-lg
-            sm:max-w-2xl
-            md:max-w-3xl
-            lg:max-w-5xl
-            xl:max-w-6xl
-            max-h-[90vh]
-            p-0
-            rounded-xl
-            bg-background
-            shadow-lg
-            flex flex-col
-          "
+              w-full
+              max-w-lg
+              sm:max-w-2xl
+              md:max-w-3xl
+              lg:max-w-5xl
+              xl:max-w-6xl
+              max-h-[90vh]
+              p-0
+              rounded-xl
+              bg-background
+              shadow-lg
+              flex flex-col
+            "
           >
             <DialogTitle className="px-6 pt-6">Edit Product</DialogTitle>
             <div className="flex-1 overflow-y-auto p-6">
               {editProductId && (
                 <EditProductForm
                   productId={editProductId}
-                  onClose={() => setEditOpen(false)}
+                  onClose={() => {
+                    setEditOpen(false);
+                    // Refresh data after editing
+                    getUserProducts().then((result) => {
+                      if (result.success) setProducts(result.data || []);
+                    });
+                    getUserStats().then((result) => {
+                      if (result.success)
+                        setUserStats(
+                          result.data || {
+                            totalProducts: 0,
+                            totalViews: 0,
+                            totalLikes: 0,
+                            totalSales: 0,
+                            totalRevenue: 0,
+                          }
+                        );
+                    });
+                  }}
                 />
               )}
             </div>

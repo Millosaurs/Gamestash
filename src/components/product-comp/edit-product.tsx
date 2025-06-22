@@ -16,6 +16,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
+import {
+  getProductById,
+  updateProduct,
+  UpdateProductData,
+} from "@/lib/actions/products";
 
 // You can pass these as props or import from a shared file
 const gameOptions = [
@@ -36,24 +42,6 @@ const categoryOptions = [
   { value: "streaming", label: "Streaming" },
 ];
 
-const mockProduct = {
-  id: 1,
-  title: "Ultimate Minecraft RGB Battlestation",
-  description:
-    "A complete gaming setup designed for Minecraft enthusiasts. Features RGB lighting, dual monitors, and optimized performance for the best gaming experience.",
-  price: "1299",
-  game: "minecraft",
-  category: "rgb",
-  status: "published",
-  tags: ["Minecraft", "RGB", "Gaming", "Dual Monitor"],
-  thumbnail:
-    "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=600&h=400&fit=crop&q=80",
-  images: [
-    "https://images.unsplash.com/photo-1547394765-185e1e68f34e?w=600&h=400&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=400&fit=crop&q=80",
-  ],
-};
-
 function ProductPreview({
   formData,
   tags,
@@ -67,13 +55,19 @@ function ProductPreview({
     game: string;
     category: string;
     status: string;
+    videoUrl: string;
   };
   tags: string[];
   thumbnail: string | null;
   images: string[];
 }) {
   const allImages = [thumbnail, ...images].filter(Boolean);
-
+  function isValidYouTubeUrl(url: string) {
+    // Accepts both youtu.be and youtube.com/watch?v=...
+    return /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}(&.*)?$/.test(
+      url.trim()
+    );
+  }
   return (
     <div className="bg-background border rounded-lg p-6 h-fit sticky top-20">
       <h3 className="text-lg font-semibold mb-4 font-display">Live Preview</h3>
@@ -146,6 +140,21 @@ function ProductPreview({
                 "Product description will appear here..."}
             </p>
           </div>
+          {formData.videoUrl && isValidYouTubeUrl(formData.videoUrl) && (
+            <div className="aspect-video rounded-lg overflow-hidden my-4">
+              <iframe
+                width="100%"
+                height="100%"
+                src={`https://www.youtube.com/embed/${
+                  formData.videoUrl.match(/(?:v=|\.be\/)([\w-]{11})/)?.[1]
+                }`}
+                title="YouTube video preview"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -157,7 +166,7 @@ export function EditProductForm({
   productId,
 }: {
   onClose?: () => void;
-  productId: number;
+  productId: string;
 }) {
   // In a real app, fetch product by productId
   const [formData, setFormData] = useState({
@@ -167,27 +176,61 @@ export function EditProductForm({
     game: "",
     category: "",
     status: "draft",
+    videoUrl: "",
   });
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
   const [thumbnail, setThumbnail] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetch
-    setFormData({
-      title: mockProduct.title,
-      description: mockProduct.description,
-      price: mockProduct.price,
-      game: mockProduct.game,
-      category: mockProduct.category,
-      status: mockProduct.status,
-    });
-    setTags(mockProduct.tags);
-    setThumbnail(mockProduct.thumbnail);
-    setImages(mockProduct.images);
+    async function fetchProduct() {
+      if (!productId) return;
+
+      setLoading(true);
+      try {
+        const result = await getProductById(String(productId));
+
+        if (result.success && result.data) {
+          const product = result.data;
+          setFormData({
+            title: product.title,
+            description: product.description,
+            price: product.price,
+            game: product.game || "",
+            category: product.category || "",
+            status: product.status,
+            videoUrl: product.video_url || "",
+          });
+          setTags(product.tags || []);
+          setThumbnail(product.thumbnail || null);
+          setImages(product.images || []);
+        } else {
+          toast.error("Failed to load product");
+        }
+      } catch (error) {
+        console.error("Error fetching product:", error);
+        toast.error("Failed to load product");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProduct();
   }, [productId]);
+
+  function isValidYouTubeUrl(url: string) {
+    return /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}(&.*)?$/.test(
+      url.trim()
+    );
+  }
+
+  function getYouTubeVideoId(url: string): string | null {
+    const match = url.match(/(?:v=|\.be\/)([\w-]{11})/);
+    return match ? match[1] : null;
+  }
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -233,24 +276,63 @@ export function EditProductForm({
   };
 
   const handleSubmit = async (status: "draft" | "published") => {
+    if (!formData.title || !formData.description || !formData.price) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    if (formData.videoUrl && !isValidYouTubeUrl(formData.videoUrl)) {
+      toast.error("Please enter a valid YouTube video URL");
+      return;
+    }
+
     setIsLoading(true);
-    setTimeout(() => {
-      console.log("Product updated:", {
-        ...formData,
+
+    try {
+      const productData: UpdateProductData = {
+        id: String(productId),
+        title: formData.title,
+        description: formData.description,
+        price: formData.price,
+        game: formData.game,
+        category: formData.category,
         status,
         tags,
         thumbnail,
         images,
-      });
+        video_url: formData.videoUrl,
+      };
+
+      const result = await updateProduct(productData);
+
+      if (result.success) {
+        toast.success(
+          `Product ${
+            status === "published" ? "published" : "saved as draft"
+          } successfully!`
+        );
+        if (onClose) onClose();
+      } else {
+        toast.error(result.error || "Failed to update product");
+      }
+    } catch (error) {
+      console.error("Error updating product:", error);
+      toast.error("An unexpected error occurred");
+    } finally {
       setIsLoading(false);
-      if (onClose) onClose();
-    }, 1000);
+    }
   };
 
   const handlePreview = () => {
     window.open(`/setup/${productId}`, "_blank");
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
   return (
     <div className="w-full font-sans px-2 sm:px-4 md:px-6">
       <div className="flex flex-col gap-4 mb-6">
@@ -458,54 +540,21 @@ export function EditProductForm({
             </CardContent>
           </Card>
           {/* Additional Images */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-display">Additional Images</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {images.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {images.map((image, index) => (
-                      <div key={index} className="relative">
-                        <img
-                          src={image || "/placeholder.svg"}
-                          alt={`Preview ${index + 1}`}
-                          className="w-full h-24 object-cover rounded-lg"
-                        />
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-1 right-1 h-6 w-6 p-0"
-                          onClick={() => handleRemoveImage(index)}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  id="images-upload"
-                />
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    document.getElementById("images-upload")?.click()
-                  }
-                  className="w-full"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Add Images
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-2">
+            <Label htmlFor="videoUrl">YouTube Video URL</Label>
+            <Input
+              id="videoUrl"
+              placeholder="https://www.youtube.com/watch?v=..."
+              value={formData.videoUrl}
+              onChange={(e) => handleInputChange("videoUrl", e.target.value)}
+              type="url"
+            />
+            {formData.videoUrl && !isValidYouTubeUrl(formData.videoUrl) && (
+              <p className="text-xs text-destructive">
+                Please enter a valid YouTube video URL.
+              </p>
+            )}
+          </div>
         </div>
         {/* Live Preview Section */}
         <div className="hidden lg:block">

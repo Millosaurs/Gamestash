@@ -200,9 +200,38 @@ export function ProductCard({
 }: {
   product: any;
   viewMode: "grid" | "list";
-  onCardClick: (id: number) => void;
+  onCardClick: (id: string) => void;
 }) {
   const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(product.likes || 0);
+  const [isLiking, setIsLiking] = useState(false);
+
+  const handleLikeClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (isLiking) return;
+
+    setIsLiking(true);
+
+    try {
+      const response = await fetch(`/api/products/${product.id}/like`, {
+        method: "POST",
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setLiked(result.liked);
+        setLikeCount((prev: number) => (result.liked ? prev + 1 : prev - 1));
+      } else {
+        console.error("Failed to toggle like:", result.error);
+      }
+    } catch (error) {
+      console.error("Error toggling like:", error);
+    } finally {
+      setIsLiking(false);
+    }
+  };
 
   const cardBase =
     "transition-all duration-200 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md border border-border/30 shadow-lg hover:shadow-2xl hover:-translate-y-1 focus:ring-2 focus:ring-primary outline-none";
@@ -251,7 +280,7 @@ export function ProductCard({
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <Heart className="h-4 w-4" />
-            <span>{product.likes.toLocaleString()}</span>
+            <span>{likeCount.toLocaleString()}</span>
           </div>
           <div className="flex items-center gap-1">
             <Eye className="h-4 w-4" />
@@ -285,12 +314,10 @@ export function ProductCard({
           />
           {/* Heart icon */}
           <button
-            className="absolute top-3 right-3 p-2 rounded-full bg-white/80 text-primary hover:bg-primary hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow"
+            className="absolute top-3 right-3 p-2 rounded-full bg-white/80 text-primary hover:bg-primary hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow disabled:opacity-50"
             aria-label={liked ? "Unlike" : "Like"}
-            onClick={(e) => {
-              e.stopPropagation();
-              setLiked((l) => !l);
-            }}
+            onClick={handleLikeClick}
+            disabled={isLiking}
             type="button"
           >
             {liked ? (
@@ -331,12 +358,10 @@ export function ProductCard({
         />
         {/* Heart icon */}
         <button
-          className="absolute top-3 right-3 p-2 rounded-full bg-white/80 text-primary hover:bg-primary hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow"
+          className="absolute top-3 right-3 p-2 rounded-full bg-white/80 text-primary hover:bg-primary hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow disabled:opacity-50"
           aria-label={liked ? "Unlike" : "Like"}
-          onClick={(e) => {
-            e.stopPropagation();
-            setLiked((l) => !l);
-          }}
+          onClick={handleLikeClick}
+          disabled={isLiking}
           type="button"
         >
           {liked ? (
@@ -368,12 +393,43 @@ export default function ExplorePage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/products")
-      .then((res) => res.json())
-      .then(setProducts);
-  }, []);
+    async function fetchProducts() {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+
+        if (searchQuery) params.set("search", searchQuery);
+        if (selectedGames.length > 0)
+          params.set("games", selectedGames.join(","));
+        if (selectedCategories.length > 0)
+          params.set("categories", selectedCategories.join(","));
+        if (priceRange[0] > 0 || priceRange[1] < 2000) {
+          params.set("priceRange", JSON.stringify(priceRange));
+        }
+        params.set("sortBy", sortBy);
+
+        const response = await fetch(`/api/products?${params.toString()}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setProducts(data);
+        } else {
+          console.error("Failed to fetch products:", data.error);
+          setProducts([]);
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
+  }, [searchQuery, selectedGames, selectedCategories, priceRange, sortBy]);
 
   const handleGameFilter = (gameId: string) => {
     setSelectedGames((prev) =>
@@ -398,13 +454,8 @@ export default function ExplorePage() {
     setSearchQuery("");
   };
 
-  const handleCardClick = (productId: number) => {
-    window.location.href = `/setup/${productId}`;
-  };
-
-  const handleHeartClick = (e: React.MouseEvent, productId: number) => {
-    e.stopPropagation();
-    console.log("Liked product:", productId);
+  const handleCardClick = (productId: string) => {
+    window.location.href = `/product/${productId}`;
   };
 
   // Filter and sort products
@@ -478,6 +529,46 @@ export default function ExplorePage() {
     selectedCategories.length +
     (priceRange[0] > 0 || priceRange[1] < 2000 ? 1 : 0) +
     (searchQuery ? 1 : 0);
+
+  const ProductsGrid = () => {
+    if (loading) {
+      return (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      );
+    }
+
+    if (sortedAndFilteredProducts.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <div className="text-muted-foreground mb-4">No products found</div>
+          <p className="text-sm text-muted-foreground">
+            Try adjusting your filters or search terms
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className={
+          viewMode === "grid"
+            ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
+            : "space-y-4"
+        }
+      >
+        {sortedAndFilteredProducts.map((product) => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            viewMode={viewMode}
+            onCardClick={handleCardClick}
+          />
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background font-sans">
@@ -729,22 +820,7 @@ export default function ExplorePage() {
             )}
 
             {/* Products Grid */}
-            <div
-              className={
-                viewMode === "grid"
-                  ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
-                  : "space-y-4"
-              }
-            >
-              {sortedAndFilteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  viewMode={viewMode}
-                  onCardClick={handleCardClick}
-                />
-              ))}
-            </div>
+            <ProductsGrid />
 
             {/* Load More */}
             <div className="text-center mt-12">

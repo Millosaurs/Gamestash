@@ -7,6 +7,9 @@ import {
   foreignKey,
   integer,
   serial,
+  uuid,
+  decimal,
+  index,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -85,37 +88,111 @@ export const verification = pgTable("verification", {
   updatedAt: timestamp({ mode: "string" }),
 });
 
-export const product = pgTable("product", {
-  id: serial("id").primaryKey(),
+export const products = pgTable("products", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .references(() => user.id)
+    .notNull(),
   title: text("title").notNull(),
-  imageUrl: text("image_url"),
-  description: text("description"),
-  price: integer("price").notNull(),
-  originalPrice: integer("original_price"),
-  uploadedAt: timestamp("uploaded_at", { mode: "string" }).notNull(),
-  rating: integer("rating"),
-  featured: boolean("featured").notNull().default(false),
-  userId: text("user_id").notNull(),
-  username: text("username"),
-  userAvatar: text("user_avatar"),
-  likes: integer("likes").notNull().default(0),
-  views: integer("views").notNull().default(0),
+  description: text("description").notNull(),
+  thumbnail: text("thumbnail"),
+  images: text("images").array(), // Array of image URLs
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  game: text("game"), // minecraft, roblox, etc.
+  category: text("category"), // rgb, minimal, etc.
+  status: text("status").notNull().default("draft"), // 'draft' | 'published'
+  views: integer("views").default(0),
+  likes: integer("likes").default(0),
+  sales: integer("sales").default(0),
+  tags: text("tags").array(), // PostgreSQL array
+  featured: boolean("featured").default(false),
+  rating: decimal("rating", { precision: 2, scale: 1 }).default("0.0"),
+  revenue: integer("revenue").default(0),
+  videoUrl: text("video_url"), // Optional video URL for product showcase
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const tag = pgTable("tag", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
-});
-
-export const productTag = pgTable(
-  "product_tag",
+// For view tracking
+export const productViews = pgTable(
+  "product_views",
   {
-    productId: integer("product_id").notNull(),
-    tagId: integer("tag_id").notNull(),
+    id: uuid("id").defaultRandom().primaryKey(),
+    productId: uuid("product_id")
+      .references(() => products.id)
+      .notNull(),
+    userId: text("user_id").references(() => user.id), // null for anonymous views
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    referrer: text("referrer"),
+    createdAt: timestamp("created_at").defaultNow(),
   },
   (table) => [
-    foreignKey({ columns: [table.productId], foreignColumns: [product.id] }),
-    foreignKey({ columns: [table.tagId], foreignColumns: [tag.id] }),
-    unique("product_tag_unique").on(table.productId, table.tagId),
+    index("product_views_product_id_idx").on(table.productId),
+    index("product_views_created_at_idx").on(table.createdAt),
+  ]
+);
+
+// For likes tracking
+export const productLikes = pgTable(
+  "product_likes",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    productId: uuid("product_id")
+      .references(() => products.id)
+      .notNull(),
+    userId: text("user_id")
+      .references(() => user.id)
+      .notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    unique("product_likes_unique").on(table.productId, table.userId),
+    index("product_likes_product_id_idx").on(table.productId),
+  ]
+);
+
+export const productSales = pgTable(
+  "product_sales",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    productId: uuid("product_id")
+      .references(() => products.id)
+      .notNull(),
+    buyerId: text("buyer_id")
+      .references(() => user.id)
+      .notNull(),
+    sellerId: text("seller_id")
+      .references(() => user.id)
+      .notNull(),
+    amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+    status: text("status").notNull().default("completed"), // 'pending', 'completed', 'refunded'
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("product_sales_product_id_idx").on(table.productId),
+    index("product_sales_seller_id_idx").on(table.sellerId),
+    index("product_sales_created_at_idx").on(table.createdAt),
+  ]
+);
+
+// Daily analytics aggregation
+export const dailyAnalytics = pgTable(
+  "daily_analytics",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    date: timestamp("date").notNull(),
+    productId: uuid("product_id")
+      .references(() => products.id)
+      .notNull(),
+    views: integer("views").default(0),
+    likes: integer("likes").default(0),
+    sales: integer("sales").default(0),
+    revenue: decimal("revenue", { precision: 10, scale: 2 }).default("0.00"),
+  },
+  (table) => [
+    unique("daily_analytics_unique").on(table.date, table.productId),
+    index("daily_analytics_product_id_idx").on(table.productId),
+    index("daily_analytics_date_idx").on(table.date),
   ]
 );

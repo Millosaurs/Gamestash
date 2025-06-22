@@ -138,8 +138,8 @@ const data = {
       icon: LifeBuoy,
     },
     {
-      title: "Feedback",
-      url: "#",
+      title: "Connect",
+      url: "/dashboard/connect",
       icon: Send,
     },
   ],

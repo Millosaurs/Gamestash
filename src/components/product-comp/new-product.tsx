@@ -15,6 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { createProduct, CreateProductData } from "@/lib/actions/products";
+import { toast } from "sonner";
 
 const gameOptions = [
   { value: "minecraft", label: "Minecraft" },
@@ -38,6 +40,13 @@ const categoryOptions = [
 const ProductPreview = ({ formData, tags, thumbnail, images }: any) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const allImages = [thumbnail, ...images].filter(Boolean);
+
+  function isValidYouTubeUrl(url: string) {
+    // Accepts both youtu.be and youtube.com/watch?v=...
+    return /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}(&.*)?$/.test(
+      url.trim()
+    );
+  }
 
   return (
     <div className="bg-background border rounded-lg p-6 h-fit sticky top-20">
@@ -120,6 +129,21 @@ const ProductPreview = ({ formData, tags, thumbnail, images }: any) => {
                 "Product description will appear here..."}
             </p>
           </div>
+          {formData.videoUrl && isValidYouTubeUrl(formData.videoUrl) && (
+            <div className="aspect-video rounded-lg overflow-hidden my-4">
+              <iframe
+                width="100%"
+                height="100%"
+                src={`https://www.youtube.com/embed/${
+                  formData.videoUrl.match(/(?:v=|\.be\/)([\w-]{11})/)?.[1]
+                }`}
+                title="YouTube video preview"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -134,6 +158,7 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
     game: "",
     category: "",
     status: "draft",
+    videoUrl: "",
   });
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
@@ -141,6 +166,13 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
   const [images, setImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
+
+  function isValidYouTubeUrl(url: string) {
+    // Accepts both youtu.be and youtube.com/watch?v=...
+    return /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}(&.*)?$/.test(
+      url.trim()
+    );
+  }
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -186,18 +218,49 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
   };
 
   const handleSubmit = async (status: "draft" | "published") => {
+    if (!formData.title || !formData.description || !formData.price) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    if (formData.videoUrl && !isValidYouTubeUrl(formData.videoUrl)) {
+      toast.error("Please enter a valid YouTube video URL");
+      return;
+    }
+
     setIsLoading(true);
-    setTimeout(() => {
-      console.log("Product saved:", {
-        ...formData,
+
+    try {
+      const productData: CreateProductData = {
+        title: formData.title,
+        description: formData.description,
+        price: formData.price,
+        game: formData.game,
+        category: formData.category,
         status,
         tags,
         thumbnail,
         images,
-      });
+        video_url: formData.videoUrl,
+      };
+
+      const result = await createProduct(productData);
+
+      if (result.success) {
+        toast.success(
+          `Product ${
+            status === "published" ? "published" : "saved as draft"
+          } successfully!`
+        );
+        if (onClose) onClose();
+      } else {
+        toast.error(result.error || "Failed to create product");
+      }
+    } catch (error) {
+      console.error("Error creating product:", error);
+      toast.error("An unexpected error occurred");
+    } finally {
       setIsLoading(false);
-      if (onClose) onClose();
-    }, 1000);
+    }
   };
 
   const handlePreview = () => {
@@ -437,55 +500,22 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
           </Card>
 
           {/* Additional Images */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-display">Additional Images</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {images.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {images.map((image, index) => (
-                      <div key={index} className="relative">
-                        <img
-                          src={image || "/placeholder.svg"}
-                          alt={`Preview ${index + 1}`}
-                          className="w-full h-24 object-cover rounded-lg"
-                        />
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-1 right-1 h-6 w-6 p-0"
-                          onClick={() => handleRemoveImage(index)}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  id="images-upload"
-                />
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    document.getElementById("images-upload")?.click()
-                  }
-                  className="w-full"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Add Images
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-2">
+            <Label htmlFor="videoUrl">YouTube Video URL</Label>
+            <Input
+              id="videoUrl"
+              placeholder="https://www.youtube.com/watch?v=..."
+              value={formData.videoUrl || ""}
+              onChange={(e) => handleInputChange("videoUrl", e.target.value)}
+              type="url"
+              pattern="https://.*"
+            />
+            {formData.videoUrl && !isValidYouTubeUrl(formData.videoUrl) && (
+              <p className="text-xs text-destructive">
+                Please enter a valid YouTube video URL.
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Preview Section */}

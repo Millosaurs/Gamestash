@@ -104,9 +104,9 @@ export default function Header() {
                   Dashboard
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => (window.location.href = "/dashboard/settings")}
+                  onClick={() => (window.location.href = "/accounts")}
                 >
-                  Settings
+                  Account
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => (window.location.href = "/auth")}
