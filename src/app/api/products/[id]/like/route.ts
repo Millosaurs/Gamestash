@@ -2,10 +2,7 @@
 import { NextResponse } from "next/server";
 import { toggleProductLike } from "@/lib/actions/products";
 
-export async function POST(
-  _: Request, // or NextRequest, but it's unused
-  { params }: any
-) {
+export async function POST(_: Request, { params }: any) {
   const { id } = params;
 
   if (!id) {
