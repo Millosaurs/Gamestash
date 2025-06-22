@@ -1,8 +1,36 @@
-function n(e) {
+interface NOptions {
+  phase?: number;
+  offset?: number;
+  frequency?: number;
+  amplitude?: number;
+}
+
+const n: {
+  n: {
+    // @ts-ignore
+    init: (e: NOptions) => void; update: () => number; value: () => number;
+  };
+  new (e: NOptions): N;
+  prototype: N;
+} = function (this: N, e: NOptions) {
   // @ts-ignore
   this.init(e || {});
+} as any;
+
+interface N {
+  phase: number;
+  offset: number;
+  frequency: number;
+  amplitude: number;
+  init(e: NOptions): void;
+  update(): number;
+  value(): number;
 }
 n.prototype = {
+  phase: 0,
+  offset: 0,
+  frequency: 0.001,
+  amplitude: 1,
   // @ts-ignore
   init: function (e) {
     // @ts-ignore
@@ -27,11 +55,18 @@ n.prototype = {
   },
 };
 
-// @ts-ignore
-function Line(e) {
-  // @ts-ignore
-  this.init(e || {});
+interface LineOptions {
+  spring: number;
 }
+
+interface LineType {
+  new (e: LineOptions): any;
+  prototype: any;
+}
+
+const Line: LineType = function (this: any, e: LineOptions) {
+  this.init(e || {});
+} as any;
 
 Line.prototype = {
   // @ts-ignore
@@ -183,7 +218,7 @@ var ctx,
   // @ts-ignore
   f,
   e = 0,
-  pos = {},
+  pos = { x: 0, y: 0 },
   // @ts-ignore
   lines = [],
   E = {
@@ -194,12 +229,23 @@ var ctx,
     dampening: 0.025,
     tension: 0.99,
   };
-function Node() {
+interface Node {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+}
+
+interface NodeConstructor {
+  new (): Node;
+}
+
+const Node: NodeConstructor = function (this: Node) {
   this.x = 0;
   this.y = 0;
   this.vy = 0;
   this.vx = 0;
-}
+} as any;
 
 export const renderCanvas = function () {
   // @ts-ignore

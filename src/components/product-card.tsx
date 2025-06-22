@@ -1,157 +1,93 @@
-"use client";
-
-import React, { useState } from "react";
-import { Heart, Star, Eye } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import type { Product } from "@/app/developers/[id]/page"; // Adjust path if needed
+import { Badge, Heart, Eye, Star } from "lucide-react";
+import { useState } from "react";
 
 export function ProductCard({
   product,
   viewMode,
   onCardClick,
 }: {
-  product: Product;
+  product: any;
   viewMode: "grid" | "list";
-  onCardClick: (id: number) => void;
+  onCardClick: (id: string) => void;
 }) {
   const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(product.likes || 0);
+  const [isLiking, setIsLiking] = useState(false);
+
+  const handleLikeClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (isLiking) return;
+
+    setIsLiking(true);
+
+    try {
+      const response = await fetch(`/api/products/${product.id}/like`, {
+        method: "POST",
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setLiked(result.liked);
+        setLikeCount((prev: number) => (result.liked ? prev + 1 : prev - 1));
+      } else {
+        console.error("Failed to toggle like:", result.error);
+      }
+    } catch (error) {
+      console.error("Error toggling like:", error);
+    } finally {
+      setIsLiking(false);
+    }
+  };
 
   const cardBase =
     "transition-all duration-200 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md border border-border/30 shadow-lg hover:shadow-2xl hover:-translate-y-1 focus:ring-2 focus:ring-primary outline-none";
   const featuredBadge =
     "absolute top-3 left-3 bg-gradient-to-r from-green-500 to-emerald-400 text-white border-0 text-xs px-2 py-1 rounded shadow";
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") onCardClick(product.id);
-  };
-
-  if (viewMode === "grid") {
-    return (
-      <div
-        tabIndex={0}
-        onClick={() => onCardClick(product.id)}
-        onKeyDown={handleKeyDown}
-        className={`group cursor-pointer relative aspect-[16/9] rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-200 flex flex-col justify-end focus:ring-2 focus:ring-primary ${cardBase}`}
-        aria-label={product.title}
-      >
-        <img
-          src={product.imageUrl || "/placeholder.svg"}
-          alt={product.title}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-        />
-        <div className="absolute inset-0 bg-black/60 group-hover:bg-black/70 transition-colors duration-300" />
-        {product.featured && (
-          <Badge className={featuredBadge}>
-            <Star className="w-3 h-3 mr-1" />
-            Featured
-          </Badge>
-        )}
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
-          <Badge
-            variant="secondary"
-            className="bg-black/50 text-white border-0 backdrop-blur-sm shadow"
-          >
-            ${product.price}
-          </Badge>
-          <button
-            className="p-2 rounded-full text-white hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
-            aria-label={liked ? "Unlike" : "Like"}
-            onClick={(e) => {
-              e.stopPropagation();
-              setLiked((l) => !l);
-            }}
-            type="button"
-            style={{ background: "none", border: "none" }}
-          >
-            {liked ? (
-              <Heart className="h-6 w-6 fill-primary text-primary" />
-            ) : (
-              <Heart className="h-6 w-6" />
-            )}
-          </button>
-        </div>
-        <div className="relative z-10 p-4 mt-auto">
-          <div className="flex flex-wrap gap-1.5 mb-2">
-            {product.tags.map((tag) => (
-              <Badge
-                key={tag}
-                variant="secondary"
-                className="text-xs px-2 py-0.5 bg-white/20 text-white border-0 backdrop-blur-sm"
-              >
-                {tag}
-              </Badge>
-            ))}
-          </div>
-          <h3 className="font-bold text-white text-lg mb-0 line-clamp-2 drop-shadow-lg">
-            {product.title}
-          </h3>
+  // Shared content block
+  const Content = () => (
+    <div className="flex flex-col h-full justify-between flex-1 min-w-0">
+      <div>
+        {/* Title */}
+        <h3 className="font-bold text-base md:text-lg text-foreground line-clamp-2 mb-1 hover:text-primary transition-colors">
+          {product.title}
+        </h3>
+        {/* Description */}
+        <p
+          className={`text-sm text-muted-foreground mb-2 ${
+            viewMode === "grid" ? "line-clamp-2" : "line-clamp-3"
+          }`}
+        >
+          {product.description}
+        </p>
+        {/* Tags */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {product.tags.map((tag: string) => (
+            <Badge
+              key={tag}
+              className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200"
+            >
+              {tag}
+            </Badge>
+          ))}
         </div>
       </div>
-    );
-  }
-
-  // List view
-  return (
-    <div
-      tabIndex={0}
-      onClick={() => onCardClick(product.id)}
-      onKeyDown={handleKeyDown}
-      className={`cursor-pointer flex gap-4 p-4 rounded-2xl border border-border/50 hover:border-border hover:shadow-lg transition-all duration-200 focus:ring-2 focus:ring-primary ${cardBase}`}
-      aria-label={product.title}
-    >
-      <div className="relative w-48 aspect-[16/9] rounded-xl overflow-hidden flex-shrink-0">
-        <img
-          src={product.imageUrl || "/placeholder.svg"}
-          alt={product.title}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute top-2 right-2 z-10">
-          <button
-            className="p-2 rounded-full text-white hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
-            aria-label={liked ? "Unlike" : "Like"}
-            onClick={(e) => {
-              e.stopPropagation();
-              setLiked((l) => !l);
-            }}
-            type="button"
-            style={{ background: "none", border: "none" }}
-          >
-            {liked ? (
-              <Heart className="h-6 w-6 fill-primary text-primary" />
-            ) : (
-              <Heart className="h-6 w-6" />
-            )}
-          </button>
+      {/* Price and Stats */}
+      <div className="flex flex-col gap-2 mt-auto">
+        <div className="font-bold text-lg md:text-xl text-primary">
+          ${product.price}
+          {product.originalPrice && (
+            <span className="text-xs text-muted-foreground line-through ml-2">
+              ${product.originalPrice}
+            </span>
+          )}
         </div>
-      </div>
-      <div className="flex-1 min-w-0 flex flex-col justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-bold text-lg text-foreground line-clamp-2 hover:text-primary transition-colors">
-              {product.title}
-            </h3>
-            {product.featured && (
-              <Badge className="bg-primary text-primary-foreground border-0 ml-2">
-                <Star className="w-3 h-3 mr-1" />
-                Featured
-              </Badge>
-            )}
-          </div>
-          <div className="font-bold text-xl text-primary mb-2">
-            ${product.price}
-          </div>
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {product.tags.map((tag) => (
-              <Badge key={tag} variant="secondary" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        </div>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <Heart className="h-4 w-4" />
-            <span>{product.likes.toLocaleString()}</span>
+            <span>{likeCount.toLocaleString()}</span>
           </div>
           <div className="flex items-center gap-1">
             <Eye className="h-4 w-4" />
@@ -162,13 +98,95 @@ export function ProductCard({
             <span>{product.rating}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {product.originalPrice && (
-            <span className="text-sm text-muted-foreground line-through">
-              ${product.originalPrice}
-            </span>
+      </div>
+    </div>
+  );
+
+  // --- GRID VIEW ---
+  if (viewMode === "grid") {
+    return (
+      <div
+        tabIndex={0}
+        onClick={() => onCardClick(product.id)}
+        className={`cursor-pointer flex flex-col rounded-2xl ${cardBase} h-full`}
+        aria-label={product.title}
+        style={{ minHeight: 400, maxHeight: 400 }}
+      >
+        {/* Image */}
+        <div className="relative w-full aspect-[16/9] rounded-t-2xl overflow-hidden group">
+          <img
+            src={product.imageUrl || "/placeholder.svg"}
+            alt={product.title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+          {/* Heart icon */}
+          <button
+            className="absolute top-3 right-3 p-2 rounded-full bg-white/80 text-primary hover:bg-primary hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow disabled:opacity-50"
+            aria-label={liked ? "Unlike" : "Like"}
+            onClick={handleLikeClick}
+            disabled={isLiking}
+            type="button"
+          >
+            {liked ? (
+              <Heart className="h-5 w-5 fill-primary text-primary" />
+            ) : (
+              <Heart className="h-5 w-5" />
+            )}
+          </button>
+          {/* Featured badge */}
+          {product.featured && (
+            <Badge className={featuredBadge}>
+              <Star className="w-3 h-3 mr-1 inline" />
+              Featured
+            </Badge>
           )}
         </div>
+        <div className="flex-1 flex flex-col p-4">
+          <Content />
+        </div>
+      </div>
+    );
+  }
+
+  // --- LIST VIEW ---
+  return (
+    <div
+      tabIndex={0}
+      onClick={() => onCardClick(product.id)}
+      className={`cursor-pointer flex flex-row gap-6 p-4 rounded-2xl ${cardBase} min-h-[180px]`}
+      aria-label={product.title}
+    >
+      {/* Image */}
+      <div className="relative w-48 aspect-[16/9] rounded-xl overflow-hidden flex-shrink-0 group">
+        <img
+          src={product.imageUrl || "/placeholder.svg"}
+          alt={product.title}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+        {/* Heart icon */}
+        <button
+          className="absolute top-3 right-3 p-2 rounded-full bg-white/80 text-primary hover:bg-primary hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow disabled:opacity-50"
+          aria-label={liked ? "Unlike" : "Like"}
+          onClick={handleLikeClick}
+          disabled={isLiking}
+          type="button"
+        >
+          {liked ? (
+            <Heart className="h-5 w-5 fill-primary text-primary" />
+          ) : (
+            <Heart className="h-5 w-5" />
+          )}
+        </button>
+        {/* Featured badge */}
+        {product.featured && (
+          <Badge className={featuredBadge}>
+            <Star className="w-3 h-3 mr-1 inline" />
+            Featured
+          </Badge>
+        )}
+      </div>
+      <div className="flex-1 flex flex-col justify-between min-w-0">
+        <Content />
       </div>
     </div>
   );

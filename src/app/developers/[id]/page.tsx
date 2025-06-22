@@ -21,6 +21,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/header";
 import type { Product } from "@/types/product";
+import { ProductCard } from "@/components/product-card";
 
 export type SocialLinks = {
   twitter?: string;
@@ -180,15 +181,12 @@ const getDeveloperById = (id: string) => {
   return developers[id as keyof typeof developers] || null;
 };
 
-import { ProductCard } from "@/components/product-card";
+type PageProps = { params: Promise<{ id: string }> };
 
-export default function DeveloperDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function DeveloperDetailPage({ params }: PageProps) {
+  const { id } = await params;
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const developer = getDeveloperById(params.id);
+  const developer = getDeveloperById(id);
 
   if (!developer) {
     return (
@@ -208,8 +206,8 @@ export default function DeveloperDetailPage({
     );
   }
 
-  const handleProductClick = (productId: number) => {
-    window.location.href = `/setup/${productId}`;
+  const handleProductClick = (id: string) => {
+    window.location.href = `/product/${id}`;
   };
 
   const handleHeartClick = (e: React.MouseEvent, productId: number) => {
