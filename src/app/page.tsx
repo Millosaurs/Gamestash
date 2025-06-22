@@ -19,25 +19,55 @@ import {
   Award,
   Search,
   SlidersHorizontal,
+  ChevronDown,
+  Grid3X3,
+  List,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
 import { useEffect, useState } from "react";
 import Header from "@/components/header";
 import Link from "next/link";
+import { getAllProducts } from "@/lib/actions/products";
 
 // Types
 interface Product {
   id: string;
   title: string;
-  price: number;
-  imageUrl?: string;
-  tags: string[];
-  featured?: boolean;
-  rating?: number;
-  downloads?: number;
-  author?: string;
+  description: string;
+  thumbnail: string | null;
+  images: string[] | null;
+  price: string;
+  game: string | null;
+  category: string | null;
+  views: number | null;
+  likes: number | null;
+  sales: number | null;
+  tags: string[] | null;
+  featured: boolean | null;
+  rating: string | null;
+  createdAt: Date | string | null;
+  updatedAt: Date | string | null;
+  userName: string | null;
+  userAvatar: string | null;
 }
 
 interface GameCategory {
@@ -45,6 +75,14 @@ interface GameCategory {
   img: string;
   count: string;
   gradient: string;
+}
+
+interface Filters {
+  search: string;
+  games: string[];
+  categories: string[];
+  priceRange: [number, number];
+  sortBy: string;
 }
 
 // Game categories with gradients
@@ -73,6 +111,18 @@ const gameCategories: GameCategory[] = [
     count: "1.5k setups",
     gradient: "from-orange-500/80 to-red-500/80",
   },
+  {
+    name: "CS2",
+    img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=500&h=300&fit=crop&q=80",
+    count: "1.2k setups",
+    gradient: "from-blue-500/80 to-purple-500/80",
+  },
+  {
+    name: "Valorant",
+    img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=500&h=300&fit=crop&q=80",
+    count: "950 setups",
+    gradient: "from-pink-500/80 to-red-500/80",
+  },
 ];
 
 const stats = [
@@ -96,22 +146,38 @@ const stats = [
   },
 ];
 
-const features = [
-  {
-    icon: Zap,
-    title: "Instant Download",
-    description: "Get your setups instantly after purchase",
-  },
-  {
-    icon: Shield,
-    title: "Quality Guaranteed",
-    description: "All setups are tested and verified",
-  },
-  {
-    icon: Award,
-    title: "Community Reviewed",
-    description: "Rated by thousands of users",
-  },
+const gameOptions = [
+  "Minecraft",
+  "Roblox",
+  "FiveM",
+  "Rust",
+  "CS2",
+  "Valorant",
+  "Fortnite",
+  "Apex Legends",
+  "League of Legends",
+  "World of Warcraft",
+];
+
+const categoryOptions = [
+  "Server",
+  "Plugin",
+  "Script",
+  "Config",
+  "Mod",
+  "Pack",
+  "Tool",
+  "Template",
+  "Theme",
+  "Addon",
+];
+
+const sortOptions = [
+  { value: "popular", label: "Most Popular" },
+  { value: "newest", label: "Newest" },
+  { value: "price-low", label: "Price: Low to High" },
+  { value: "price-high", label: "Price: High to Low" },
+  { value: "rating", label: "Highest Rated" },
 ];
 
 function ProductCard({ product }: { product: Product }) {
@@ -128,7 +194,7 @@ function ProductCard({ product }: { product: Product }) {
           </div>
         )}
         <img
-          src={product.imageUrl || "/placeholder.svg"}
+          src={product.thumbnail || "/placeholder.svg"}
           alt={product.title}
           className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${
             imageLoaded ? "opacity-100" : "opacity-0"
@@ -198,7 +264,7 @@ function ProductCard({ product }: { product: Product }) {
       <div className="p-4 space-y-3">
         {/* Tags */}
         <div className="flex flex-wrap gap-1.5">
-          {product.tags.slice(0, 3).map((tag: string) => (
+          {product.tags?.slice(0, 3).map((tag: string) => (
             <Badge
               key={tag}
               variant="secondary"
@@ -207,7 +273,7 @@ function ProductCard({ product }: { product: Product }) {
               {tag}
             </Badge>
           ))}
-          {product.tags.length > 3 && (
+          {product.tags && product.tags.length > 3 && (
             <Badge
               variant="secondary"
               className="text-xs px-2 py-0.5 bg-muted/50 text-muted-foreground border-0"
@@ -231,19 +297,19 @@ function ProductCard({ product }: { product: Product }) {
                 <span className="font-medium">{product.rating}</span>
               </div>
             )}
-            {product.downloads && (
+            {product.views && (
               <div className="flex items-center gap-1">
                 <TrendingUp className="h-3 w-3" />
                 <span>
-                  {product.downloads > 1000
-                    ? `${(product.downloads / 1000).toFixed(1)}k`
-                    : product.downloads}
+                  {product.views > 1000
+                    ? `${(product.views / 1000).toFixed(1)}k`
+                    : product.views}
                 </span>
               </div>
             )}
           </div>
-          {product.author && (
-            <span className="text-xs">by {product.author}</span>
+          {product.userName && (
+            <span className="text-xs">by {product.userName}</span>
           )}
         </div>
       </div>
@@ -251,132 +317,220 @@ function ProductCard({ product }: { product: Product }) {
   );
 }
 
-function HeroSection() {
-  const [searchQuery, setSearchQuery] = useState("");
+function FilterSidebar({
+  filters,
+  onFiltersChange,
+  isOpen,
+  onClose,
+}: {
+  filters: Filters;
+  onFiltersChange: (filters: Filters) => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+}) {
+  const handleGameChange = (game: string, checked: boolean) => {
+    const newGames = checked
+      ? [...filters.games, game]
+      : filters.games.filter((g) => g !== game);
+    onFiltersChange({ ...filters, games: newGames });
+  };
 
-  return (
-    <section className="relative py-16 sm:py-24 bg-gradient-to-br from-background via-background to-muted/30 overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+  const handleCategoryChange = (category: string, checked: boolean) => {
+    const newCategories = checked
+      ? [...filters.categories, category]
+      : filters.categories.filter((c) => c !== category);
+    onFiltersChange({ ...filters, categories: newCategories });
+  };
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-4xl mx-auto">
-          {/* Badge */}
-          <Badge className="mb-6 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors">
-            <Sparkles className="w-3 h-3 mr-1" />
-            New setups added daily
-          </Badge>
+  const handlePriceChange = (value: number[]) => {
+    onFiltersChange({ ...filters, priceRange: [value[0], value[1]] });
+  };
 
-          {/* Heading */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 font-display">
-            The Ultimate
-            <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              {" "}
-              Gaming{" "}
-            </span>
-            Marketplace
-          </h1>
+  const clearFilters = () => {
+    onFiltersChange({
+      search: "",
+      games: [],
+      categories: [],
+      priceRange: [0, 100],
+      sortBy: "popular",
+    });
+  };
 
-          {/* Description */}
-          <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-            Discover premium gaming setups, scripts, and configurations. Join
-            thousands of gamers who trust SkriptStore for their gaming needs.
-          </p>
+  const FilterContent = () => (
+    <div className="space-y-6">
+      {/* Clear Filters */}
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold text-foreground">Filters</h3>
+        <Button variant="ghost" size="sm" onClick={clearFilters}>
+          Clear All
+        </Button>
+      </div>
 
-          {/* Search Bar */}
-          <div className="relative max-w-md mx-auto mb-8">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search for setups..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-3 h-12 text-base rounded-full border-2 border-border/50 focus:border-primary transition-colors"
-            />
-          </div>
+      {/* Games */}
+      <div className="space-y-3">
+        <h4 className="font-medium text-sm text-foreground">Games</h4>
+        <div className="space-y-2 max-h-48 overflow-y-auto">
+          {gameOptions.map((game) => (
+            <div key={game} className="flex items-center space-x-2">
+              <Checkbox
+                id={`game-${game}`}
+                checked={filters.games.includes(game)}
+                onCheckedChange={(checked) =>
+                  handleGameChange(game, checked as boolean)
+                }
+              />
+              <label
+                htmlFor={`game-${game}`}
+                className="text-sm text-muted-foreground cursor-pointer"
+              >
+                {game}
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button
-              size="lg"
-              className="px-8 h-12 text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              Explore Setups
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="px-8 h-12 text-base rounded-full border-2 hover:bg-accent transition-all duration-300"
-            >
-              Learn More
-            </Button>
+      {/* Categories */}
+      <div className="space-y-3">
+        <h4 className="font-medium text-sm text-foreground">Categories</h4>
+        <div className="space-y-2 max-h-48 overflow-y-auto">
+          {categoryOptions.map((category) => (
+            <div key={category} className="flex items-center space-x-2">
+              <Checkbox
+                id={`category-${category}`}
+                checked={filters.categories.includes(category)}
+                onCheckedChange={(checked) =>
+                  handleCategoryChange(category, checked as boolean)
+                }
+              />
+              <label
+                htmlFor={`category-${category}`}
+                className="text-sm text-muted-foreground cursor-pointer"
+              >
+                {category}
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Price Range */}
+      <div className="space-y-3">
+        <h4 className="font-medium text-sm text-foreground">Price Range</h4>
+        <div className="px-2">
+          <Slider
+            value={filters.priceRange}
+            onValueChange={handlePriceChange}
+            max={100}
+            min={0}
+            step={1}
+            className="w-full"
+          />
+          <div className="flex justify-between text-sm text-muted-foreground mt-2">
+            <span>${filters.priceRange[0]}</span>
+            <span>${filters.priceRange[1]}</span>
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  );
+
+  if (isOpen !== undefined) {
+    // Mobile sheet version
+    return (
+      <Sheet open={isOpen} onOpenChange={onClose}>
+        <SheetContent side="left" className="w-80">
+          <SheetHeader>
+            <SheetTitle>Filters</SheetTitle>
+            <SheetDescription>
+              Filter products by your preferences
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6">
+            <FilterContent />
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  // Desktop sidebar version
+  return (
+    <div className="w-80 bg-card border border-border/50 rounded-2xl p-6 h-fit sticky top-6">
+      <FilterContent />
+    </div>
   );
 }
 
 export default function HomePage() {
-  const [latestProducts, setLatestProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [filters, setFilters] = useState<Filters>({
+    search: "",
+    games: [],
+    categories: [],
+    priceRange: [0, 100],
+    sortBy: "popular",
+  });
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const result = await getAllProducts({
+        search: filters.search || undefined,
+        games: filters.games.length > 0 ? filters.games : undefined,
+        categories:
+          filters.categories.length > 0 ? filters.categories : undefined,
+        priceRange: filters.priceRange,
+        sortBy: filters.sortBy,
+      });
+
+      if (result.success) {
+        setProducts(result.data || []);
+      } else {
+        console.error("Failed to fetch products:", result.error);
+        setProducts([]);
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Simulate API call with better mock data
-    const mockProducts: Product[] = [
-      {
-        id: "1",
-        title: "Ultimate Minecraft Server Setup",
-        price: 29.99,
-        imageUrl:
-          "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?w=500&h=300&fit=crop&q=80",
-        tags: ["Minecraft", "Server", "Plugin"],
-        featured: true,
-        rating: 4.8,
-        downloads: 1250,
-        author: "CraftMaster",
-      },
-      {
-        id: "2",
-        title: "Roblox Studio Advanced Scripts",
-        price: 19.99,
-        imageUrl:
-          "https://images.unsplash.com/photo-1614294149010-950b698f72c0?w=500&h=300&fit=crop&q=80",
-        tags: ["Roblox", "Script", "Studio"],
-        rating: 4.6,
-        downloads: 890,
-        author: "RobloxPro",
-      },
-      {
-        id: "3",
-        title: "FiveM Racing Server Pack",
-        price: 39.99,
-        imageUrl:
-          "https://images.unsplash.com/photo-1542751110-97427bbecf20?w=500&h=300&fit=crop&q=80",
-        tags: ["FiveM", "Racing", "Server"],
-        rating: 4.9,
-        downloads: 2100,
-        author: "SpeedDemon",
-      },
-    ];
+    fetchProducts();
+  }, [filters]);
 
-    setTimeout(() => {
-      setLatestProducts(mockProducts);
-      setLoading(false);
-    }, 1000);
-  }, []);
+  const handleFiltersChange = (newFilters: Filters) => {
+    setFilters(newFilters);
+  };
+
+  const handleSearchChange = (search: string) => {
+    setFilters((prev) => ({ ...prev, search }));
+  };
+
+  const handleSortChange = (sortBy: string) => {
+    setFilters((prev) => ({ ...prev, sortBy }));
+  };
+
+  const handleCategoryClick = (categoryName: string) => {
+    const newGames = filters.games.includes(categoryName)
+      ? filters.games.filter((g) => g !== categoryName)
+      : [...filters.games, categoryName];
+    setFilters((prev) => ({ ...prev, games: newGames }));
+  };
 
   return (
     <div className="min-h-screen bg-background font-sans">
       {/* Header */}
       <Header />
 
-      {/* Hero Section */}
-      <HeroSection />
-
       {/* Stats Bar */}
-      <div className="bg-muted/30 border-y border-border/40">
+      <div className="bg-muted/30 border-b border-border/40">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
             {stats.map((stat, index) => (
@@ -401,30 +555,8 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Features Section */}
-      <section className="py-12 bg-muted/20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <div
-                key={index}
-                className="text-center group hover:bg-background rounded-2xl p-6 transition-all duration-300 hover:shadow-lg border border-transparent hover:border-border/50"
-              >
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                  <feature.icon className="h-6 w-6" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-muted-foreground">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Category Cards */}
-      <section className="py-12 bg-background">
+      <section className="py-12 bg-muted/10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
             <div>
@@ -435,21 +567,18 @@ export default function HomePage() {
                 Find setups for your favorite games
               </p>
             </div>
-            <Button
-              variant="ghost"
-              size="lg"
-              className="text-primary hover:text-primary/80 self-start sm:self-auto group"
-            >
-              View all
-              <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {gameCategories.map((cat) => (
               <button
                 key={cat.name}
-                className="relative group rounded-2xl overflow-hidden aspect-[4/3] w-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-300 hover:scale-105 hover:shadow-xl"
+                onClick={() => handleCategoryClick(cat.name)}
+                className={`relative group rounded-2xl overflow-hidden aspect-[4/3] w-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-300 hover:scale-105 hover:shadow-xl ${
+                  filters.games.includes(cat.name)
+                    ? "ring-2 ring-primary ring-offset-2"
+                    : ""
+                }`}
                 tabIndex={0}
                 aria-label={cat.name}
               >
@@ -461,91 +590,211 @@ export default function HomePage() {
                 <div
                   className={`absolute inset-0 bg-gradient-to-t ${cat.gradient} group-hover:opacity-90 transition-opacity duration-300`}
                 />
-                <div className="absolute inset-0 flex flex-col justify-end p-4 z-10">
-                  <span className="text-white font-bold text-lg mb-1 drop-shadow-lg">
+                <div className="absolute inset-0 flex flex-col justify-end p-3 z-10">
+                  <span className="text-white font-bold text-sm mb-1 drop-shadow-lg">
                     {cat.name}
                   </span>
-                  <span className="text-white/90 text-sm drop-shadow">
+                  <span className="text-white/90 text-xs drop-shadow">
                     {cat.count}
                   </span>
                 </div>
-                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <ChevronRight className="h-5 w-5 text-white" />
-                </div>
+                {filters.games.includes(cat.name) && (
+                  <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
+                    <Star className="h-3 w-3 fill-current" />
+                  </div>
+                )}
               </button>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Featured & Latest Setups */}
-      <section className="py-16 bg-muted/10">
+      {/* Main Content */}
+      <section className="py-8 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-            <div>
-              <h2 className="text-3xl font-bold text-foreground mb-2 font-display">
-                Featured Setups
-              </h2>
-              <p className="text-muted-foreground text-lg">
-                Handpicked by our community
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex gap-2">
-                {["all", "featured", "latest"].map((filter) => (
-                  <Button
-                    key={filter}
-                    variant={activeFilter === filter ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setActiveFilter(filter)}
-                    className="capitalize"
-                  >
-                    {filter}
-                  </Button>
-                ))}
+          {/* Search and Controls */}
+          <div className="mb-8 space-y-4">
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* Search */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search for setups..."
+                  value={filters.search}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="pl-10 pr-4 h-11 text-base"
+                />
               </div>
-              <Button variant="outline" size="sm" className="gap-2">
+
+              {/* Sort */}
+              <Select value={filters.sortBy} onValueChange={handleSortChange}>
+                <SelectTrigger className="w-full lg:w-48 h-11">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sortOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* View Mode */}
+              <div className="flex gap-2">
+                <Button
+                  variant={viewMode === "grid" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("grid")}
+                  className="h-11 px-3"
+                >
+                  <Grid3X3 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "list" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("list")}
+                  className="h-11 px-3"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Mobile Filter Toggle */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setMobileFiltersOpen(true)}
+                className="lg:hidden h-11 gap-2"
+              >
                 <SlidersHorizontal className="h-4 w-4" />
                 Filters
               </Button>
             </div>
-          </div>
 
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="text-center">
-                <Loader2 className="animate-spin h-12 w-12 text-primary mx-auto mb-4" />
-                <p className="text-muted-foreground">
-                  Loading amazing setups...
-                </p>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {latestProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+            {/* Active Filters */}
+            {(filters.games.length > 0 || filters.categories.length > 0) && (
+              <div className="flex flex-wrap gap-2">
+                {filters.games.map((game) => (
+                  <Badge
+                    key={game}
+                    variant="secondary"
+                    className="gap-1 cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                    onClick={() =>
+                      handleFiltersChange({
+                        ...filters,
+                        games: filters.games.filter((g) => g !== game),
+                      })
+                    }
+                  >
+                    {game}
+                    <X className="h-3 w-3" />
+                  </Badge>
+                ))}
+                {filters.categories.map((category) => (
+                  <Badge
+                    key={category}
+                    variant="secondary"
+                    className="gap-1 cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                    onClick={() =>
+                      handleFiltersChange({
+                        ...filters,
+                        categories: filters.categories.filter(
+                          (c) => c !== category
+                        ),
+                      })
+                    }
+                  >
+                    {category}
+                    <X className="h-3 w-3" />
+                  </Badge>
                 ))}
               </div>
+            )}
+          </div>
 
-              <div className="text-center mt-12">
-                <Link href="/explore">
-                  <Button
-                    size="lg"
-                    className="px-8 h-12 text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group"
+          <div className="flex gap-8">
+            {/* Desktop Filters Sidebar */}
+            <div className="hidden lg:block">
+              <FilterSidebar
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+              />
+            </div>
+
+            {/* Mobile Filters Sheet */}
+            <FilterSidebar
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              isOpen={mobileFiltersOpen}
+              onClose={() => setMobileFiltersOpen(false)}
+            />
+
+            {/* Products Grid */}
+            <div className="flex-1">
+              {loading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="text-center">
+                    <Loader2 className="animate-spin h-12 w-12 text-primary mx-auto mb-4" />
+                    <p className="text-muted-foreground">
+                      Loading amazing setups...
+                    </p>
+                  </div>
+                </div>
+              ) : products.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="max-w-md mx-auto">
+                    <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-foreground mb-2">
+                      No setups found
+                    </h3>
+                    <p className="text-muted-foreground mb-4">
+                      Try adjusting your filters or search terms to find what
+                      you're looking for.
+                    </p>
+                    <Button
+                      onClick={() =>
+                        handleFiltersChange({
+                          search: "",
+                          games: [],
+                          categories: [],
+                          priceRange: [0, 100],
+                          sortBy: "popular",
+                        })
+                      }
+                    >
+                      Clear All Filters
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {products.length} setups
+                    </p>
+                  </div>
+
+                  <div
+                    className={`grid gap-6 ${
+                      viewMode === "grid"
+                        ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
+                        : "grid-cols-1"
+                    }`}
                   >
-                    Explore All Setups
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </Link>
-              </div>
-            </>
-          )}
+                    {products.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border/40 bg-muted/30 mt-0">
+      <footer className="border-t border-border/40 bg-muted/30 mt-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <div className="flex items-center justify-center space-x-3 mb-6">
