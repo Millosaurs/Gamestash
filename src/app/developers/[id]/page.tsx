@@ -20,26 +20,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/header";
+import type { Product } from "@/types/product";
+
 export type SocialLinks = {
   twitter?: string;
   instagram?: string;
   website?: string;
   youtube?: string;
   twitch?: string;
-};
-
-export type Product = {
-  id: number;
-  title: string;
-  imageUrl: string;
-  price: number;
-  originalPrice?: number;
-  likes: number;
-  views: number;
-  tags: string[];
-  rating: number;
-  featured: boolean;
-  uploadedAt: string;
 };
 
 export type Developer = {
@@ -194,8 +182,11 @@ const getDeveloperById = (id: string) => {
 
 import { ProductCard } from "@/components/product-card";
 
-export default function DeveloperDetailPage(props: { params: { id: string } }) {
-  const { params } = props;
+export default function DeveloperDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const developer = getDeveloperById(params.id);
 
