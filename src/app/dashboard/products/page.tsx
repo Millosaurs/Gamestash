@@ -155,7 +155,7 @@ export default function ProductsPage() {
   };
 
   const handlePreviewProduct = (productId: string) => {
-    window.open(`/setup/${productId}`, "_blank");
+    window.open(`/product/${productId}`, "_blank");
   };
 
   const handleViewAnalytics = (productId: string) => {
