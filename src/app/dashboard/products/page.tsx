@@ -464,14 +464,6 @@ export default function ProductsPage() {
                                     <Eye className="mr-2 h-4 w-4" />
                                     View Analytics
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      handlePreviewProduct(product.id)
-                                    }
-                                  >
-                                    <Eye className="mr-2 h-4 w-4" />
-                                    Preview
-                                  </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
                                     onClick={() =>
