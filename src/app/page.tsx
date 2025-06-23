@@ -263,9 +263,12 @@ export default function LandingPage() {
                 <Image
                   src={cat.img || "/placeholder.svg"}
                   alt={cat.name}
-                  fill
+                  width={400}
+                  height={300}
                   className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700"
                   loading="lazy"
+                  sizes="(max-width: 768px) 100vw, 400px"
+                  priority={false}
                 />
                 <div
                   className={`absolute inset-0 bg-gradient-to-t ${cat.gradient} group-hover:opacity-90 transition-opacity duration-300`}
@@ -319,9 +322,12 @@ export default function LandingPage() {
                     <Image
                       src={product.thumbnail || "/placeholder.svg"}
                       alt={product.title}
-                      fill
+                      width={640}
+                      height={400}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
+                      sizes="(max-width: 768px) 100vw, 640px"
+                      priority={false}
                     />
                     {/* Featured badge */}
                     {product.featured && (

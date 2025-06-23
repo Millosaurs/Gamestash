@@ -1,6 +1,6 @@
 "use client";
 
-import type React from "react";
+import React from "react";
 
 import { useEffect, useState } from "react";
 import {
@@ -24,6 +24,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import Header from "@/components/header";
+import Image from "next/image";
 
 // Mock data for filters and products
 const gameFilters = [
@@ -377,12 +378,81 @@ export default function ExplorePage() {
         }
       >
         {sortedAndFilteredProducts.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            viewMode={viewMode}
-            onCardClick={handleCardClick}
-          />
+          <React.Fragment key={product.id}>
+            <div
+              className={
+                viewMode === "grid"
+                  ? "bg-card rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-200 cursor-pointer flex flex-col"
+                  : "bg-card rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-200 cursor-pointer flex flex-row gap-4"
+              }
+              onClick={() => handleCardClick(product.id)}
+            >
+              <div
+                className={
+                  viewMode === "grid"
+                    ? "relative aspect-[16/10] w-full"
+                    : "relative w-40 h-28 flex-shrink-0"
+                }
+              >
+                <Image
+                  src={
+                    product.imageUrl || product.thumbnail || "/placeholder.svg"
+                  }
+                  alt={product.title}
+                  fill={viewMode === "grid"}
+                  width={viewMode === "list" ? 160 : undefined}
+                  height={viewMode === "list" ? 112 : undefined}
+                  className="object-cover w-full h-full"
+                  sizes={
+                    viewMode === "grid"
+                      ? "(max-width: 768px) 100vw, 400px"
+                      : "160px"
+                  }
+                  priority={false}
+                />
+              </div>
+              <div className="p-4 flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="flex flex-wrap gap-1.5 mb-1">
+                    {(product.tags?.slice(0, 3) || []).map((tag: string) => (
+                      <span
+                        key={tag}
+                        className="inline-block bg-muted/50 text-xs px-2 py-0.5 rounded-full text-muted-foreground"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <h3 className="font-bold text-lg text-foreground line-clamp-2">
+                    {product.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {product.description}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
+                  <span className="font-bold text-primary text-base">
+                    ${product.price}
+                  </span>
+                  {product.rating && (
+                    <span>
+                      <Sparkles className="inline h-3 w-3 text-yellow-400 mr-1" />
+                      {product.rating}
+                    </span>
+                  )}
+                  {product.username && <span>by {product.username}</span>}
+                  {product.views && (
+                    <span>
+                      {product.views > 1000
+                        ? `${(product.views / 1000).toFixed(1)}k`
+                        : product.views}{" "}
+                      views
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </React.Fragment>
         ))}
       </div>
     );
@@ -442,22 +512,40 @@ export default function ExplorePage() {
                 </h3>
                 <div className="space-y-2">
                   {gameFilters.map((game) => (
-                    <div key={game.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={game.id}
-                        checked={selectedGames.includes(game.id)}
-                        onCheckedChange={() => handleGameFilter(game.id)}
+                    <button
+                      key={game.id}
+                      onClick={() => handleGameFilter(game.id)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg w-full text-left transition-colors duration-150 ${
+                        selectedGames.includes(game.id)
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "hover:bg-muted/60"
+                      }`}
+                      aria-pressed={selectedGames.includes(game.id)}
+                      type="button"
+                    >
+                      <Image
+                        src={
+                          game.id === "minecraft"
+                            ? "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?w=40&h=40&fit=crop&q=80"
+                            : game.id === "roblox"
+                            ? "https://images.unsplash.com/photo-1614294149010-950b698f72c0?w=40&h=40&fit=crop&q=80"
+                            : game.id === "fivem"
+                            ? "https://images.unsplash.com/photo-1542751110-97427bbecf20?w=40&h=40&fit=crop&q=80"
+                            : game.id === "rust"
+                            ? "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=40&h=40&fit=crop&q=80"
+                            : "/placeholder.svg"
+                        }
+                        alt={game.name}
+                        width={32}
+                        height={32}
+                        className="rounded-full object-cover"
+                        sizes="32px"
                       />
-                      <label
-                        htmlFor={game.id}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
-                      >
-                        {game.name}
-                      </label>
+                      <span className="flex-1">{game.name}</span>
                       <span className="text-xs text-muted-foreground">
-                        {game.count.toLocaleString()}
+                        {game.count}
                       </span>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -468,28 +556,23 @@ export default function ExplorePage() {
                   Categories
                 </h3>
                 <div className="space-y-2">
-                  {categoryFilters.map((category) => (
-                    <div
-                      key={category.id}
-                      className="flex items-center space-x-2"
+                  {categoryFilters.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => handleCategoryFilter(cat.id)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg w-full text-left transition-colors duration-150 ${
+                        selectedCategories.includes(cat.id)
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "hover:bg-muted/60"
+                      }`}
+                      aria-pressed={selectedCategories.includes(cat.id)}
+                      type="button"
                     >
-                      <Checkbox
-                        id={category.id}
-                        checked={selectedCategories.includes(category.id)}
-                        onCheckedChange={() =>
-                          handleCategoryFilter(category.id)
-                        }
-                      />
-                      <label
-                        htmlFor={category.id}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
-                      >
-                        {category.name}
-                      </label>
+                      <span className="flex-1">{cat.name}</span>
                       <span className="text-xs text-muted-foreground">
-                        {category.count.toLocaleString()}
+                        {cat.count}
                       </span>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
