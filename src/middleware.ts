@@ -28,7 +28,6 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/accounts/:path*",
-    "!/api/auth/:path*",
-    "!/auth/:path*",
+    "/((?!api/auth|auth).*)", // Only include, don't use !
   ],
 };
