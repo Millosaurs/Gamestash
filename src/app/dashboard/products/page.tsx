@@ -173,7 +173,7 @@ export default function ProductsPage() {
   if (isPending || loading) {
     return (
       <>
-        <SiteHeader />
+        <SiteHeader title="Products" />
         <div className="min-h-screen bg-background font-sans">
           <div className="max-w-9xl px-4 sm:px-6 lg:px-8 py-8">
             <div className="animate-pulse">
@@ -195,7 +195,7 @@ export default function ProductsPage() {
 
   return (
     <>
-      <SiteHeader />
+      <SiteHeader title="Products" />
       <div className="min-h-screen bg-background font-sans">
         <div className="max-w-9xl px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
