@@ -1,6 +1,6 @@
-# SkriptStore
+# Gamestash
 
-SkriptStore is a modern marketplace platform built with Next.js 15.3.4, designed for developers to share, sell, and discover code scripts and tools.
+Gamestash is a modern marketplace platform built with Next.js 15.3.4, designed for developers to share, sell, and discover code scripts and tools.
 
 ## Features
 
@@ -37,8 +37,8 @@ SkriptStore is a modern marketplace platform built with Next.js 15.3.4, designed
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/skriptstore.git
-   cd skriptstore
+   git clone https://github.com/yourusername/Gamestash.git
+   cd Gamestash
    ```
 
 2. Install dependencies:
@@ -52,7 +52,7 @@ SkriptStore is a modern marketplace platform built with Next.js 15.3.4, designed
    Create a `.env` file in the root directory with:
 
    ```env
-   DATABASE_URL=postgresql://user:password@localhost:5432/skriptstore
+   DATABASE_URL=postgresql://user:password@localhost:5432/Gamestash
    # Add other required environment variables
    ```
 

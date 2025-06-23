@@ -15,7 +15,7 @@ const lexend = Lexend({
 });
 
 export const metadata: Metadata = {
-  title: "SkriptStore",
+  title: "Gamestash",
   description: "made by millo with ❤️",
 };
 

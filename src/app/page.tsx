@@ -353,7 +353,7 @@ export default function LandingPage() {
               <Sparkles className="h-6 w-6 text-primary-foreground" />
             </div>
             <span className="font-bold text-2xl text-foreground font-display">
-              SkriptStore
+              Gamestash
             </span>
           </div>
           <p className="text-muted-foreground mb-8 max-w-2xl mx-auto text-lg leading-relaxed text-center">
@@ -373,7 +373,7 @@ export default function LandingPage() {
             </Badge>
           </div>
           <div className="mt-8 text-xs text-muted-foreground text-center">
-            &copy; {new Date().getFullYear()} SkriptStore. All rights reserved.
+            &copy; {new Date().getFullYear()} Gamestash. All rights reserved.
           </div>
         </div>
       </footer>

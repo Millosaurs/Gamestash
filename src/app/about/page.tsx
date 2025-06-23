@@ -187,17 +187,17 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* What is SkriptStore Section */}
+      {/* What is Gamestash Section */}
       <section className="py-16">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
           <Badge variant="secondary" className="mb-4">
             What is SkriptStore?
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6 font-display">
-            SkriptStore is much more than a platform!
+            Gamestash is much more than a platform!
           </h2>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            SkriptStore is a platform that sells everything that goes into the
+            Gamestash is a platform that sells everything that goes into the
             perfect gaming setup. On our marketplace you can buy products within
             several different categories, and from several different skilled
             creators and developers. From RGB lighting configurations to
@@ -243,7 +243,7 @@ export default function AboutPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <Badge variant="outline" className="mb-4">
-              Why choose products from SkriptStore?
+              Why choose products from Gamestash?
             </Badge>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6 font-display">
               With us you are always in safe hands.
@@ -382,8 +382,8 @@ export default function AboutPage() {
               Meet our team
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              The passionate individuals behind SkriptStore, working tirelessly
-              to bring you the best gaming setup marketplace experience.
+              The passionate individuals behind Gamestash, working tirelessly to
+              bring you the best gaming setup marketplace experience.
             </p>
           </div>
 
@@ -422,7 +422,7 @@ export default function AboutPage() {
                 <Sparkles className="h-5 w-5 text-primary-foreground" />
               </div>
               <span className="font-bold text-xl text-foreground font-display">
-                SkriptStore
+                Gamestash
               </span>
             </div>
             <p className="text-muted-foreground mb-6 max-w-md">
@@ -430,7 +430,7 @@ export default function AboutPage() {
               sell the perfect gaming battlestation.
             </p>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <span>© 2024 SkriptStore. All rights reserved.</span>
+              <span>© 2024 Gamestash. All rights reserved.</span>
             </div>
           </div>
         </div>

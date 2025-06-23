@@ -249,10 +249,10 @@ export default function Header() {
               <FileArchive className="h-5 w-5 text-primary-foreground" />
             </div>
             <h1 className="text-xl font-bold text-foreground font-display hidden sm:block">
-              SkriptStore
+              Gamestash
             </h1>
             <h1 className="text-lg font-bold text-foreground font-display sm:hidden">
-              SkriptStore
+              Gamestash
             </h1>
           </Link>
 

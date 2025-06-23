@@ -30,7 +30,7 @@ export default function AuthPage() {
                 <FileArchive className="h-6 w-6 text-primary-foreground" />
               </div>
               <span className="font-bold text-2xl text-foreground font-display">
-                SkriptStore
+                Gamestash
               </span>
             </div>
             <CardTitle className="text-2xl font-display">
