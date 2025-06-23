@@ -11,7 +11,7 @@ import {
   productViews,
 } from "@/db/schema";
 import { eq, desc, and, sql, count, gte, sum, lte } from "drizzle-orm";
-import { auth } from "@/lib/auth";
+import { getCachedSession } from "@/lib/session-cache";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 
@@ -57,9 +57,7 @@ export interface UpdateProductData extends CreateProductData {
 // Create new product
 export async function createProduct(data: CreateProductData) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getCachedSession();
 
     if (!session?.user) {
       return { success: false, error: "Not authenticated" };
@@ -96,9 +94,7 @@ export async function createProduct(data: CreateProductData) {
 // Update existing product
 export async function updateProduct(data: UpdateProductData) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getCachedSession();
 
     if (!session?.user) {
       return { success: false, error: "Not authenticated" };
@@ -149,9 +145,7 @@ export async function updateProduct(data: UpdateProductData) {
 // Delete product
 export async function deleteProduct(productId: string) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getCachedSession();
 
     if (!session?.user) {
       return { success: false, error: "Not authenticated" };
@@ -186,9 +180,7 @@ export async function deleteProduct(productId: string) {
 // Get user's products
 export async function getUserProducts() {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getCachedSession();
 
     if (!session?.user) {
       return { success: false, error: "Not authenticated" };
@@ -434,9 +426,7 @@ export async function getProductById(productId: string) {
 // Get user stats
 export async function getUserStats() {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getCachedSession();
 
     if (!session?.user) {
       return { success: false, error: "Not authenticated" };
@@ -485,9 +475,7 @@ export async function trackProductView(
   referrer?: string
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getCachedSession();
 
     // Insert view record
     await db.insert(productViews).values({
@@ -528,9 +516,7 @@ export async function trackProductView(
 // Toggle product like
 export async function toggleProductLike(productId: string) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getCachedSession();
 
     if (!session?.user) {
       return { success: false, error: "Not authenticated" };
@@ -591,9 +577,7 @@ export async function getProductAnalytics(
   days: number = 30
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getCachedSession();
 
     if (!session?.user) {
       return { success: false, error: "Not authenticated" };
@@ -694,9 +678,7 @@ export async function getProductAnalytics(
 
 export async function getUserDashboardAnalytics(days: number = 30) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getCachedSession();
 
     if (!session?.user) {
       return { success: false, error: "Not authenticated" };
