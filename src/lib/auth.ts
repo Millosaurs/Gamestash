@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { nextCookies } from "better-auth/next-js";
 import { Pool } from "pg";
 
 export const auth = betterAuth({
@@ -15,4 +16,5 @@ export const auth = betterAuth({
       clientSecret: process.env.DISCORD_CLIENT_SECRET!,
     },
   },
+  plugins: [nextCookies()], // Ensure cookies are set in server actions
 });
