@@ -112,19 +112,6 @@ export default function AboutPage() {
       {/* Header */}
       <Header />
 
-      {/* Breadcrumbs */}
-      <div className="border-b border-border/40 bg-muted/20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex items-center text-sm text-muted-foreground">
-            <a href="/" className="hover:text-foreground cursor-pointer">
-              Home
-            </a>
-            <span className="mx-2">/</span>
-            <span className="text-foreground font-medium">About Us</span>
-          </div>
-        </div>
-      </div>
-
       {/* Hero Section */}
       <section className="py-20 bg-background">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">

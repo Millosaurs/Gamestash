@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Upload, X, Plus, Eye, EyeOff } from "lucide-react";
+import {
+  ArrowLeft,
+  Upload,
+  X,
+  Plus,
+  Eye,
+  EyeOff,
+  ImagePlus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { createProduct, CreateProductData } from "@/lib/actions/products";
 import { toast } from "sonner";
+import imageCompression from "browser-image-compression";
 
 const gameOptions = [
   { value: "minecraft", label: "Minecraft" },
@@ -37,12 +46,21 @@ const categoryOptions = [
 ];
 
 // Preview Component
-const ProductPreview = ({ formData, tags, thumbnail, images }: any) => {
+const ProductPreview = ({
+  formData,
+  tags,
+  thumbnail,
+  images,
+}: {
+  formData: any;
+  tags: string[];
+  thumbnail: string | null;
+  images: string[];
+}) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const allImages = [thumbnail, ...images].filter(Boolean);
 
   function isValidYouTubeUrl(url: string) {
-    // Accepts both youtu.be and youtube.com/watch?v=...
     return /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}(&.*)?$/.test(
       url.trim()
     );
@@ -68,7 +86,7 @@ const ProductPreview = ({ formData, tags, thumbnail, images }: any) => {
                   <button
                     key={index}
                     onClick={() => setCurrentImageIndex(index)}
-                    className={`flex-shrink-0 w-16 h-16 rounded border-2 overflow-hidden ${
+                    className={`flex-shrink-0 w-16 h-9 rounded border-2 overflow-hidden ${
                       currentImageIndex === index
                         ? "border-primary"
                         : "border-border"
@@ -168,7 +186,6 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
   const [showPreview, setShowPreview] = useState(true);
 
   function isValidYouTubeUrl(url: string) {
-    // Accepts both youtu.be and youtube.com/watch?v=...
     return /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}(&.*)?$/.test(
       url.trim()
     );
@@ -189,28 +206,50 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
     setTags((prev) => prev.filter((tag) => tag !== tagToRemove));
   };
 
-  const handleThumbnailUpload = (
+  // Compress and upload thumbnail
+  const handleThumbnailUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setThumbnail(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressedFile = await imageCompression(file, {
+          maxSizeMB: 1.5,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+        });
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setThumbnail(e.target?.result as string);
+        };
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        toast.error("Image compression failed");
+      }
     }
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Compress and upload additional images
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = Array.from(event.target.files || []);
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImages((prev) => [...prev, e.target?.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
+    for (const file of files) {
+      try {
+        const compressedFile = await imageCompression(file, {
+          maxSizeMB: 1.5,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+        });
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImages((prev) => [...prev, e.target?.result as string]);
+        };
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        toast.error("Image compression failed");
+      }
+    }
   };
 
   const handleRemoveImage = (index: number) => {
@@ -500,6 +539,65 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
           </Card>
 
           {/* Additional Images */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-display">Additional Images</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-4">
+                  {images.map((img, idx) => (
+                    <div
+                      key={idx}
+                      className="relative w-24 h-24 rounded-lg overflow-hidden border"
+                    >
+                      <img
+                        src={img}
+                        alt={`Additional ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1"
+                        onClick={() => handleRemoveImage(idx)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      id="additional-images-upload"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="w-24 h-24 flex flex-col items-center justify-center"
+                      onClick={() =>
+                        document
+                          .getElementById("additional-images-upload")
+                          ?.click()
+                      }
+                    >
+                      <ImagePlus className="w-8 h-8 mb-1" />
+                      <span className="text-xs">Add</span>
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  You can upload multiple images. PNG, JPG up to 10MB each.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* YouTube Video */}
           <div className="space-y-2">
             <Label htmlFor="videoUrl">YouTube Video URL</Label>
             <Input

@@ -1,8 +1,7 @@
-// components/product-comp/edit-product.tsx
 "use client";
 
-import { useState, useEffect } from "react";
-import { ArrowLeft, Upload, X, Plus } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ArrowLeft, Upload, X, Plus, ImagePlus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,8 +21,8 @@ import {
   updateProduct,
   UpdateProductData,
 } from "@/lib/actions/products";
+import imageCompression from "browser-image-compression";
 
-// You can pass these as props or import from a shared file
 const gameOptions = [
   { value: "minecraft", label: "Minecraft" },
   { value: "roblox", label: "Roblox" },
@@ -61,9 +60,10 @@ function ProductPreview({
   thumbnail: string | null;
   images: string[];
 }) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const allImages = [thumbnail, ...images].filter(Boolean);
+
   function isValidYouTubeUrl(url: string) {
-    // Accepts both youtu.be and youtube.com/watch?v=...
     return /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}(&.*)?$/.test(
       url.trim()
     );
@@ -77,7 +77,7 @@ function ProductPreview({
           <div className="space-y-2">
             <div className="aspect-video bg-muted rounded-lg overflow-hidden">
               <img
-                src={allImages[0] || "/placeholder.svg"}
+                src={allImages[currentImageIndex] || "/placeholder.svg"}
                 alt="Product preview"
                 className="w-full h-full object-cover"
               />
@@ -87,7 +87,12 @@ function ProductPreview({
                 {allImages.map((image, index) => (
                   <button
                     key={index}
-                    className={`flex-shrink-0 w-16 h-16 rounded border-2 overflow-hidden`}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`flex-shrink-0 w-16 h-14 rounded border-2 overflow-hidden ${
+                      currentImageIndex === index
+                        ? "border-primary"
+                        : "border-border"
+                    }`}
                   >
                     <img
                       src={image || "/placeholder.svg"}
@@ -168,7 +173,6 @@ export function EditProductForm({
   onClose?: () => void;
   productId: string;
 }) {
-  // In a real app, fetch product by productId
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -184,6 +188,7 @@ export function EditProductForm({
   const [images, setImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const additionalImagesInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -227,11 +232,6 @@ export function EditProductForm({
     );
   }
 
-  function getYouTubeVideoId(url: string): string | null {
-    const match = url.match(/(?:v=|\.be\/)([\w-]{11})/);
-    return match ? match[1] : null;
-  }
-
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -247,28 +247,62 @@ export function EditProductForm({
     setTags((prev) => prev.filter((tag) => tag !== tagToRemove));
   };
 
-  const handleThumbnailUpload = (
+  // Compress and upload thumbnail
+  const handleThumbnailUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setThumbnail(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressedFile = await imageCompression(file, {
+          maxSizeMB: 1.5,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+        });
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setThumbnail(e.target?.result as string);
+        };
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        toast.error("Image compression failed");
+      }
     }
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Compress and upload additional images
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = Array.from(event.target.files || []);
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImages((prev) => [...prev, e.target?.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
+    if (images.length >= 5) {
+      toast.error("You can upload up to 5 additional images only.");
+      return;
+    }
+    // Only allow up to 5 images in total
+    const availableSlots = 5 - images.length;
+    const filesToProcess = files.slice(0, availableSlots);
+
+    for (const file of filesToProcess) {
+      try {
+        const compressedFile = await imageCompression(file, {
+          maxSizeMB: 1.5,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+        });
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImages((prev) => [...prev, e.target?.result as string]);
+        };
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        toast.error("Image compression failed");
+      }
+    }
+    // Reset input value so the same file can be selected again if needed
+    if (additionalImagesInputRef.current) {
+      additionalImagesInputRef.current.value = "";
+    }
   };
 
   const handleRemoveImage = (index: number) => {
@@ -323,13 +357,14 @@ export function EditProductForm({
   };
 
   const handlePreview = () => {
-    window.open(`/setup/${productId}`, "_blank");
+    window.open(`/product/${productId}`, "_blank");
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex flex-col justify-center items-center h-64">
+        <Loader2 className="animate-spin w-4 h-4 " />
+        <p className="text-muted-foreground mt-2">Loading product...</p>
       </div>
     );
   }
@@ -365,7 +400,11 @@ export function EditProductForm({
               !formData.price
             }
           >
-            {isLoading ? "Updating..." : "Update"}
+            {isLoading ? (
+              <Loader2 className="animate-spin w-4 h-4 " />
+            ) : (
+              "Update"
+            )}
           </Button>
         </div>
       </div>
@@ -540,6 +579,72 @@ export function EditProductForm({
             </CardContent>
           </Card>
           {/* Additional Images */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-display">Additional Images</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-4">
+                  {images.map((img, idx) => (
+                    <div
+                      key={idx}
+                      className="relative w-24 h-24 rounded-lg overflow-hidden border"
+                    >
+                      <img
+                        src={img}
+                        alt={`Additional ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1"
+                        onClick={() => handleRemoveImage(idx)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      id="additional-images-upload"
+                      ref={additionalImagesInputRef}
+                      disabled={images.length >= 5}
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="w-24 h-24 flex flex-col items-center justify-center"
+                      onClick={() =>
+                        images.length < 5
+                          ? document
+                              .getElementById("additional-images-upload")
+                              ?.click()
+                          : toast.error(
+                              "You can upload up to 5 additional images only."
+                            )
+                      }
+                      disabled={images.length >= 5}
+                    >
+                      <ImagePlus className="w-8 h-8 mb-1" />
+                      <span className="text-xs">Add</span>
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  You can upload up to 5 additional images. PNG, JPG up to 10MB
+                  each.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+          {/* YouTube Video */}
           <div className="space-y-2">
             <Label htmlFor="videoUrl">YouTube Video URL</Label>
             <Input

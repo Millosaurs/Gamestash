@@ -147,10 +147,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handlePreviewProduct = (productId: string) => {
-    window.open(`/dashboard/products/${productId}`, "_blank");
-  };
-
   const handleViewProduct = (productId: string) => {
     window.location.href = `/dashboard/products/${productId}`;
   };
@@ -471,14 +467,6 @@ export default function DashboardPage() {
                                 >
                                   <TrendingUp className="mr-2 h-4 w-4" />
                                   View Analytics
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    handlePreviewProduct(product.id)
-                                  }
-                                >
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  Preview
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => handleEditProduct(product.id)}

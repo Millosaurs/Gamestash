@@ -125,11 +125,7 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="flex flex-col items-center justify-center min-h-[60vh] bg-gradient-to-b from-muted/40 to-background border-b border-border/40 px-4">
         <div className="flex flex-col items-center w-full max-w-2xl">
-          <div className="flex justify-center mb-6">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500 shadow-lg">
-              <Sparkles className="h-8 w-8 text-white" />
-            </div>
-          </div>
+          <div className="flex justify-center mb-6"></div>
           <h1 className="text-4xl sm:text-5xl font-extrabold mb-4 font-display text-foreground tracking-tight text-center">
             Level Up Your Gaming
             <br />
@@ -349,9 +345,6 @@ export default function LandingPage() {
       <footer className="border-t border-border/40 bg-muted/30 mt-8 flex flex-col items-center">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 flex flex-col items-center">
           <div className="flex items-center justify-center space-x-3 mb-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg">
-              <Sparkles className="h-6 w-6 text-primary-foreground" />
-            </div>
             <span className="font-bold text-2xl text-foreground font-display">
               Gamestash
             </span>

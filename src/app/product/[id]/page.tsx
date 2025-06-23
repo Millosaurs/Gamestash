@@ -170,7 +170,7 @@ export default function ProductPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="animate-pulse">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="aspect-square bg-gray-200 rounded-lg"></div>
+                <div className="aspect-video bg-gray-200 rounded-lg"></div>
                 <div className="space-y-4">
                   <div className="h-8 bg-gray-200 rounded w-3/4"></div>
                   <div className="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -223,7 +223,7 @@ export default function ProductPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* Product Images */}
             <div className="space-y-4">
-              <div className="aspect-square rounded-lg overflow-hidden bg-muted">
+              <div className="aspect-video rounded-lg overflow-hidden bg-muted">
                 <img
                   src={images[selectedImage] || "/placeholder.svg"}
                   alt={product.title}
@@ -236,7 +236,7 @@ export default function ProductPage() {
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
-                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
+                      className={`flex-shrink-0 w-20 h-12 rounded-lg overflow-hidden border-2 ${
                         selectedImage === index
                           ? "border-primary"
                           : "border-transparent"
