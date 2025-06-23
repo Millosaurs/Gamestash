@@ -93,23 +93,61 @@ export default function LandingPage() {
   const [search, setSearch] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
 
+  // Progressive JSON retrieval (if supported by backend)
   useEffect(() => {
+    let controller = new AbortController();
+    setLoading(true);
+    setApiError(null);
+    setProducts([]);
     async function fetchLatest() {
-      setLoading(true);
       try {
-        const res = await fetch("/api/products/latest");
-        const data = await res.json();
-        setProducts(
-          Array.isArray(data) ? data.filter((p) => p.featured).slice(0, 6) : []
-        );
+        const res = await fetch("/api/products/latest", {
+          signal: controller.signal,
+        });
+        if (res.body && window.ReadableStream) {
+          // Progressive streaming (browser support required)
+          const reader = res.body.getReader();
+          let received = "";
+          let done = false;
+          while (!done) {
+            const { value, done: doneReading } = await reader.read();
+            done = doneReading;
+            if (value) {
+              received += new TextDecoder().decode(value);
+              try {
+                // Try to parse as soon as possible
+                const json = JSON.parse(received);
+                setProducts(
+                  Array.isArray(json)
+                    ? json.filter((p) => p.featured).slice(0, 6)
+                    : []
+                );
+                break;
+              } catch (e) {
+                // Not yet a full JSON, keep reading
+              }
+            }
+          }
+        } else {
+          // Fallback: normal fetch
+          const data = await res.json();
+          setProducts(
+            Array.isArray(data)
+              ? data.filter((p) => p.featured).slice(0, 6)
+              : []
+          );
+        }
       } catch (e) {
+        setApiError("Failed to load products");
         setProducts([]);
       } finally {
         setLoading(false);
       }
     }
     fetchLatest();
+    return () => controller.abort();
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {

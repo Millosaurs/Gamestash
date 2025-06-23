@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { productLikes, products, user } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { headers } from "next/headers";
+import { getCachedSession } from "@/lib/session-cache";
 
 // Add session cache
 const sessionCache = new Map();
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
     const cacheKey = request.headers.get("authorization") || "anon";
     let session = sessionCache.get(cacheKey);
     if (!session) {
-      session = await auth.api.getSession({ headers: await headers() });
+      session = await getCachedSession();
       sessionCache.set(cacheKey, session);
     }
 

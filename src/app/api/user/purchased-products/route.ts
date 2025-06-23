@@ -1,6 +1,6 @@
 // app/api/user/purchased-products/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getCachedSession } from "@/lib/session-cache";
 import { db } from "@/db";
 import { productSales, products } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const cacheKey = request.headers.get("authorization") || "anon";
     let session = sessionCache.get(cacheKey);
     if (!session) {
-      session = await auth.api.getSession({ headers: await headers() });
+      session = await getCachedSession();
       sessionCache.set(cacheKey, session);
     }
 
