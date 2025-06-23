@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/header";
 import Link from "next/link";
+import Image from "next/image";
 
 interface Product {
   id: string;
@@ -221,9 +222,10 @@ export default function LandingPage() {
                 tabIndex={0}
                 aria-label={cat.name}
               >
-                <img
+                <Image
                   src={cat.img || "/placeholder.svg"}
                   alt={cat.name}
+                  fill
                   className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700"
                   loading="lazy"
                 />
@@ -276,9 +278,10 @@ export default function LandingPage() {
                 >
                   {/* Image */}
                   <div className="relative aspect-[16/10] bg-muted">
-                    <img
+                    <Image
                       src={product.thumbnail || "/placeholder.svg"}
                       alt={product.title}
+                      fill
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
                     />

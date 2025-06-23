@@ -6,11 +6,17 @@ import { productSales, products } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { headers } from "next/headers";
 
+// Add session cache
+const sessionCache = new Map();
+
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const cacheKey = request.headers.get("authorization") || "anon";
+    let session = sessionCache.get(cacheKey);
+    if (!session) {
+      session = await auth.api.getSession({ headers: await headers() });
+      sessionCache.set(cacheKey, session);
+    }
 
     if (!session?.user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });

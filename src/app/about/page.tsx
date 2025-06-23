@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/header";
+import Image from "next/image";
 
 const stats = [
   {
@@ -207,9 +208,11 @@ export default function AboutPage() {
                 className="flex flex-col items-center text-center group"
               >
                 <div className="w-24 h-24 rounded-full bg-background border-2 border-border group-hover:border-primary transition-colors duration-200 flex items-center justify-center mb-3">
-                  <img
+                  <Image
                     src={partner.logo || "/placeholder.svg"}
                     alt={partner.name}
+                    width={64}
+                    height={32}
                     className="w-16 h-16 object-contain rounded-full"
                   />
                 </div>
@@ -336,24 +339,32 @@ export default function AboutPage() {
             </div>
             {/* Images */}
             <div className="grid grid-cols-2 gap-4">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=300&h=200&fit=crop&q=80"
                 alt="Custom setup example 1"
+                width={300}
+                height={200}
                 className="rounded-xl shadow-lg object-cover aspect-video"
               />
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1547394765-185e1e68f34e?w=300&h=200&fit=crop&q=80"
                 alt="Custom setup example 2"
+                width={300}
+                height={200}
                 className="rounded-xl shadow-lg object-cover aspect-video"
               />
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=300&h=200&fit=crop&q=80"
                 alt="Custom setup example 3"
+                width={300}
+                height={200}
                 className="rounded-xl shadow-lg object-cover aspect-video"
               />
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=300&h=200&fit=crop&q=80"
                 alt="Custom setup example 4"
+                width={300}
+                height={200}
                 className="rounded-xl shadow-lg object-cover aspect-video"
               />
             </div>
@@ -370,7 +381,7 @@ export default function AboutPage() {
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               The passionate individuals behind Gamestash, working tirelessly to
-              bring you the best gaming setup marketplace experience.
+              brings you the best gaming setup marketplace experience.
             </p>
           </div>
 
@@ -381,9 +392,11 @@ export default function AboutPage() {
                 className="text-center hover:shadow-lg transition-shadow duration-200"
               >
                 <CardContent className="p-6">
-                  <img
+                  <Image
                     src={member.avatar || "/placeholder.svg"}
                     alt={member.name}
+                    width={96}
+                    height={96}
                     className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
                   />
                   <h3 className="font-bold text-foreground mb-1">

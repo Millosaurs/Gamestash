@@ -22,6 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/header";
 import type { Product } from "@/types/product";
 import { ProductCard } from "@/components/product-card";
+import Image from "next/image";
 
 export type SocialLinks = {
   twitter?: string;
@@ -242,9 +243,10 @@ export default async function DeveloperDetailPage({ params }: PageProps) {
 
       {/* Banner with fade and overlay card */}
       <div className="relative h-64 md:h-80 w-full">
-        <img
+        <Image
           src={developer.coverImage || "/placeholder.svg"}
           alt={`${developer.displayName} cover`}
+          fill
           className="w-full h-full object-cover"
         />
         {/* Fade at bottom */}
@@ -260,9 +262,11 @@ export default async function DeveloperDetailPage({ params }: PageProps) {
           <div className="bg-background/95 rounded-2xl shadow-lg flex flex-col md:flex-row items-center gap-6 px-6 py-6 border border-border">
             {/* Avatar and badges */}
             <div className="relative flex-shrink-0">
-              <img
+              <Image
                 src={developer.avatar || "/placeholder.svg"}
                 alt={developer.displayName}
+                width={96}
+                height={96}
                 className={`w-24 h-24 rounded-full object-cover border-4 ${
                   developer.featured
                     ? "border-primary shadow-lg"

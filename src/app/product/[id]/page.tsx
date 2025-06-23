@@ -28,6 +28,7 @@ import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Link from "next/link";
 import Header from "@/components/header";
+import Image from "next/image";
 
 function isValidYouTubeUrl(url: string) {
   return /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}(&.*)?$/.test(
@@ -224,9 +225,10 @@ export default function ProductPage() {
             {/* Product Images */}
             <div className="space-y-4">
               <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-                <img
+                <Image
                   src={images[selectedImage] || "/placeholder.svg"}
                   alt={product.title}
+                  fill
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -242,9 +244,10 @@ export default function ProductPage() {
                           : "border-transparent"
                       }`}
                     >
-                      <img
+                      <Image
                         src={image}
                         alt={`${product.title} ${index + 1}`}
+                        fill
                         className="w-full h-full object-cover"
                       />
                     </button>

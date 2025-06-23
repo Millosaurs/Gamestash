@@ -192,6 +192,7 @@ const mockProducts = [
 
 import { Badge } from "@/components/ui/badge";
 import { ProductCard } from "@/components/product-card";
+import { ProductCardSkeleton } from "@/components/ProductCardSkeleton";
 
 export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -342,8 +343,16 @@ export default function ExplorePage() {
   const ProductsGrid = () => {
     if (loading) {
       return (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div
+          className={
+            viewMode === "grid"
+              ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
+              : "space-y-4"
+          }
+        >
+          {Array.from({ length: 6 }).map((_, i) => (
+            <ProductCardSkeleton key={i} viewMode={viewMode} />
+          ))}
         </div>
       );
     }

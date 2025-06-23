@@ -1,6 +1,7 @@
 import { Heart, Eye, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge"; // <-- Correct import
 import { useState } from "react";
+import Image from "next/image";
 
 export function ProductCard({
   product,
@@ -105,10 +106,11 @@ export function ProductCard({
       >
         {/* Image */}
         <div className="relative w-full aspect-[16/9] rounded-t-2xl overflow-hidden group">
-          <img
-            src={product.imageUrl || product.thumbnail || "/placeholder.svg"}
+          <Image
+            src={product.imageUrl || "/placeholder.svg"}
             alt={product.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
           {/* Heart icon */}
           <button
@@ -149,10 +151,11 @@ export function ProductCard({
     >
       {/* Image */}
       <div className="relative w-48 aspect-[16/9] rounded-xl overflow-hidden flex-shrink-0 group">
-        <img
-          src={product.imageUrl || product.thumbnail || "/placeholder.svg"}
+        <Image
+          src={product.imageUrl || "/placeholder.svg"}
           alt={product.title}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          fill
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
         {/* Heart icon */}
         <button

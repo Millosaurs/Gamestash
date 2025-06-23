@@ -26,6 +26,7 @@ import {
 import { createProduct, CreateProductData } from "@/lib/actions/products";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
+import Image from "next/image";
 
 const gameOptions = [
   { value: "minecraft", label: "Minecraft" },
@@ -74,10 +75,11 @@ const ProductPreview = ({
         {allImages.length > 0 && (
           <div className="space-y-2">
             <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-              <img
+              <Image
                 src={allImages[currentImageIndex] || "/placeholder.svg"}
                 alt="Product preview"
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
               />
             </div>
             {allImages.length > 1 && (
@@ -92,10 +94,11 @@ const ProductPreview = ({
                         : "border-border"
                     }`}
                   >
-                    <img
+                    <Image
                       src={image || "/placeholder.svg"}
                       alt={`Thumbnail ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
                     />
                   </button>
                 ))}
@@ -491,10 +494,11 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
                 <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
                   {thumbnail ? (
                     <div className="relative inline-block">
-                      <img
+                      <Image
                         src={thumbnail || "/placeholder.svg"}
                         alt="Thumbnail preview"
-                        className="max-w-full h-48 object-cover rounded-lg"
+                        fill
+                        className="object-cover rounded-lg"
                       />
                       <Button
                         variant="destructive"
@@ -551,10 +555,11 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
                       key={idx}
                       className="relative w-24 h-24 rounded-lg overflow-hidden border"
                     >
-                      <img
+                      <Image
                         src={img}
                         alt={`Additional ${idx + 1}`}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                       />
                       <Button
                         variant="destructive"
