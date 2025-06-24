@@ -16,6 +16,8 @@ import {
   SortAsc,
   SortDesc,
   Link2,
+  TrendingUp,
+  View,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -462,15 +464,15 @@ export default function ProductsPage() {
                                       handleViewAnalytics(product.id)
                                     }
                                   >
-                                    <Eye className="mr-2 h-4 w-4" />
-                                    View Analytics
+                                    <TrendingUp className="mr-2 h-4 w-4" />
+                                    Analytics
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() =>
                                       handlePreviewProduct(product.id)
                                     }
                                   >
-                                    <Link2 className="mr-2 h-4 w-4" />
+                                    <View className="mr-2 h-4 w-4" />
                                     View
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />

@@ -27,6 +27,35 @@ export const user = pgTable(
     totalSales: integer().notNull().default(0),
     totalRevenue: integer().notNull().default(0),
     totalViews: integer().notNull().default(0),
+    username: text().unique(), // @username for developers
+    displayName: text(), // Display name (defaults to name if not set)
+    bio: text(),
+    location: text(),
+    website: text(),
+
+    // Social links
+    twitterUrl: text(),
+    instagramUrl: text(),
+    youtubeUrl: text(),
+    twitchUrl: text(),
+
+    // Developer status
+    verified: boolean().default(false),
+    featured: boolean().default(false),
+    isDeveloper: boolean().default(false),
+
+    // Specialties
+    specialties: text().array(), // ["RGB", "Gaming", "Minimal"]
+
+    // Add missing stats
+    totalLikes: integer().notNull().default(0),
+    rating: decimal("rating", { precision: 2, scale: 1 }).default("0.0"),
+
+    // Settings
+    profileVisibility: text().default("public"),
+    emailNotifications: boolean().default(true),
+    pushNotifications: boolean().default(false),
+    marketingEmails: boolean().default(false),
   },
   (table) => [unique("user_email_key").on(table.email)]
 );
@@ -105,6 +134,7 @@ export const products = pgTable("products", {
   likes: integer("likes").default(0),
   sales: integer("sales").default(0),
   tags: text("tags").array(), // PostgreSQL array
+  originalPrice: decimal("original_price", { precision: 10, scale: 2 }), // For discounts
   featured: boolean("featured").default(false),
   rating: decimal("rating", { precision: 2, scale: 1 }).default("0.0"),
   revenue: integer("revenue").default(0),

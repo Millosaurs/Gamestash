@@ -31,6 +31,13 @@ import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Header from "@/components/header";
 import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 export default function AccountsPage() {
   const { data: session, isPending } = useSession();
@@ -38,6 +45,7 @@ export default function AccountsPage() {
   const [purchasedProducts, setPurchasedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("profile");
+  const [editMode, setEditMode] = useState(false);
 
   // User settings state
   const [userSettings, setUserSettings] = useState({
@@ -47,19 +55,27 @@ export default function AccountsPage() {
     profileVisibility: "public",
   });
 
+  // Add state for profile
+  const [profile, setProfile] = useState<any>(null);
+
   useEffect(() => {
     async function fetchUserData() {
       if (!session?.user) return;
 
       setLoading(true);
       try {
+        // Fetch user profile
+        const profileRes = await fetch("/api/user/profile");
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          setProfile(profileData);
+        }
         // Fetch liked products
         const likedResponse = await fetch("/api/user/liked-products");
         if (likedResponse.ok) {
           const likedData = await likedResponse.json();
           setLikedProducts(likedData);
         }
-
         // Fetch purchased products
         const purchasedResponse = await fetch("/api/user/purchased-products");
         if (purchasedResponse.ok) {
@@ -73,7 +89,6 @@ export default function AccountsPage() {
         setLoading(false);
       }
     }
-
     fetchUserData();
   }, [session]);
 
@@ -234,68 +249,176 @@ export default function AccountsPage() {
               {activeTab === "profile" && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Profile Information</CardTitle>
+                    <CardTitle>Developer Profile</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        const formData = new FormData(e.currentTarget);
-                        handleUpdateProfile(formData);
-                      }}
-                      className="space-y-6"
-                    >
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <Label htmlFor="name">Full Name</Label>
-                          <Input
-                            id="name"
-                            name="name"
-                            defaultValue={session.user.name || ""}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            defaultValue={session.user.email || ""}
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="bio">Bio</Label>
-                        <Textarea
-                          id="bio"
-                          name="bio"
-                          placeholder="Tell us about yourself..."
-                          rows={4}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <Label htmlFor="location">Location</Label>
-                          <Input
-                            id="location"
-                            name="location"
-                            placeholder="City, Country"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="website">Website</Label>
-                          <Input
-                            id="website"
-                            name="website"
-                            placeholder="https://yourwebsite.com"
-                          />
-                        </div>
-                      </div>
-
-                      <Button type="submit">Update Profile</Button>
-                    </form>
+                    {/* Read-only profile details */}
+                    <ProfileDetails
+                      user={profile}
+                      onEdit={() => setEditMode(true)}
+                    />
+                    {/* Editable form, shown only when editMode is true */}
+                    {editMode && (
+                      <Dialog open={editMode} onOpenChange={setEditMode}>
+                        <DialogContent showCloseButton>
+                          <DialogHeader>
+                            <DialogTitle>Edit Profile</DialogTitle>
+                          </DialogHeader>
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              const formData = new FormData(e.currentTarget);
+                              handleUpdateProfile(formData);
+                              setEditMode(false);
+                            }}
+                            className="space-y-6 mt-4"
+                          >
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div>
+                                <Label htmlFor="name">Full Name</Label>
+                                <Input
+                                  id="name"
+                                  name="name"
+                                  defaultValue={profile?.name || ""}
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="displayName">
+                                  Display Name
+                                </Label>
+                                <Input
+                                  id="displayName"
+                                  name="displayName"
+                                  defaultValue={profile?.displayName || ""}
+                                  placeholder="How you want to be shown publicly"
+                                />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div>
+                                <Label htmlFor="username">Username</Label>
+                                <Input
+                                  id="username"
+                                  name="username"
+                                  defaultValue={profile?.username || ""}
+                                  placeholder="@username"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="email">Email</Label>
+                                <Input
+                                  id="email"
+                                  name="email"
+                                  type="email"
+                                  defaultValue={profile?.email || ""}
+                                  disabled
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <Label htmlFor="bio">Bio</Label>
+                              <Textarea
+                                id="bio"
+                                name="bio"
+                                defaultValue={profile?.bio || ""}
+                                placeholder="Tell us about yourself and your expertise..."
+                                rows={4}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="specialties">Specialties</Label>
+                              <Input
+                                id="specialties"
+                                name="specialties"
+                                defaultValue={
+                                  Array.isArray(profile?.specialties)
+                                    ? profile.specialties.join(", ")
+                                    : profile?.specialties || ""
+                                }
+                                placeholder="RGB, Gaming, Minimal (comma-separated)"
+                              />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div>
+                                <Label htmlFor="location">Location</Label>
+                                <Input
+                                  id="location"
+                                  name="location"
+                                  defaultValue={profile?.location || ""}
+                                  placeholder="City, Country"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="website">Website</Label>
+                                <Input
+                                  id="website"
+                                  name="website"
+                                  defaultValue={profile?.website || ""}
+                                  placeholder="https://yourwebsite.com"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold mb-3">
+                                Social Links
+                              </h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <Label htmlFor="twitterUrl">Twitter</Label>
+                                  <Input
+                                    id="twitterUrl"
+                                    name="twitterUrl"
+                                    defaultValue={profile?.twitterUrl || ""}
+                                    placeholder="https://twitter.com/username"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="instagramUrl">
+                                    Instagram
+                                  </Label>
+                                  <Input
+                                    id="instagramUrl"
+                                    name="instagramUrl"
+                                    defaultValue={profile?.instagramUrl || ""}
+                                    placeholder="https://instagram.com/username"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="youtubeUrl">YouTube</Label>
+                                  <Input
+                                    id="youtubeUrl"
+                                    name="youtubeUrl"
+                                    defaultValue={profile?.youtubeUrl || ""}
+                                    placeholder="https://youtube.com/@username"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="twitchUrl">Twitch</Label>
+                                  <Input
+                                    id="twitchUrl"
+                                    name="twitchUrl"
+                                    defaultValue={profile?.twitchUrl || ""}
+                                    placeholder="https://twitch.tv/username"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 mt-4">
+                              <Button type="submit">Update Profile</Button>
+                              <DialogClose asChild>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  onClick={() => setEditMode(false)}
+                                >
+                                  Cancel
+                                </Button>
+                              </DialogClose>
+                            </div>
+                          </form>
+                        </DialogContent>
+                      </Dialog>
+                    )}
                   </CardContent>
                 </Card>
               )}
@@ -509,5 +632,123 @@ export default function AccountsPage() {
         </div>
       </div>
     </>
+  );
+}
+
+// Restore ProfileDetails to only accept user and onEdit props
+function ProfileDetails({ user, onEdit }: { user: any; onEdit: () => void }) {
+  if (!user) return null;
+  return (
+    <div className="mb-6">
+      <div className="flex items-center gap-4 mb-4">
+        <Avatar className="w-16 h-16">
+          <AvatarImage src={user.image ?? undefined} />
+          <AvatarFallback>
+            {user.displayName?.charAt(0) || user.name?.charAt(0) || "U"}
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <h3 className="font-semibold text-xl">
+            {user.displayName || user.name}
+          </h3>
+          <p className="text-muted-foreground">@{user.username}</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+        <div>
+          <Label className="mb-1 block">Email</Label>
+          <div className="bg-muted rounded px-3 py-2">{user.email}</div>
+        </div>
+        <div>
+          <Label className="mb-1 block">Location</Label>
+          <div className="bg-muted rounded px-3 py-2">
+            {user.location || "-"}
+          </div>
+        </div>
+        <div>
+          <Label className="mb-1 block">Website</Label>
+          <div className="bg-muted rounded px-3 py-2">
+            {user.website || "-"}
+          </div>
+        </div>
+        <div>
+          <Label className="mb-1 block">Specialties</Label>
+          <div className="bg-muted rounded px-3 py-2">
+            {Array.isArray(user.specialties)
+              ? user.specialties.join(", ")
+              : user.specialties || "-"}
+          </div>
+        </div>
+      </div>
+      <div className="mb-2">
+        <Label className="mb-1 block">Bio</Label>
+        <div className="bg-muted rounded px-3 py-2 min-h-[48px]">
+          {user.bio || "-"}
+        </div>
+      </div>
+      <div className="mb-2">
+        <Label className="mb-1 block">Social Links</Label>
+        <div className="flex flex-wrap gap-2 mt-1">
+          {user.twitterUrl && (
+            <a
+              href={user.twitterUrl}
+              className="underline text-blue-600"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Twitter
+            </a>
+          )}
+          {user.instagramUrl && (
+            <a
+              href={user.instagramUrl}
+              className="underline text-pink-600"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Instagram
+            </a>
+          )}
+          {user.youtubeUrl && (
+            <a
+              href={user.youtubeUrl}
+              className="underline text-red-600"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              YouTube
+            </a>
+          )}
+          {user.twitchUrl && (
+            <a
+              href={user.twitchUrl}
+              className="underline text-purple-600"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Twitch
+            </a>
+          )}
+          {user.website && (
+            <a
+              href={user.website}
+              className="underline text-foreground"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Website
+            </a>
+          )}
+          {!user.twitterUrl &&
+            !user.instagramUrl &&
+            !user.youtubeUrl &&
+            !user.twitchUrl &&
+            !user.website && <span className="text-muted-foreground">-</span>}
+        </div>
+      </div>
+      <Button className="mt-4" onClick={onEdit}>
+        <Edit className="w-4 h-4 mr-2" /> Edit Profile
+      </Button>
+    </div>
   );
 }

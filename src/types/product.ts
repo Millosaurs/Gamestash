@@ -1,4 +1,6 @@
 export type Product = {
+  image: string;
+  thumbnail: any;
   id: number;
   title: string;
   imageUrl: string;

@@ -1,0 +1,108 @@
+import { NextResponse } from "next/server";
+import { db } from "@/db";
+import { user, products, productLikes } from "@/db/schema";
+import { eq, sql, desc, and } from "drizzle-orm";
+import { cookies } from "next/headers";
+import { getCachedSession } from "@/lib/session-cache";
+
+export async function GET(request: Request) {
+  try {
+    // Use cookies for server-side auth
+    const cookieStore = await cookies();
+    const sessionToken =
+      cookieStore.get("next-auth.session-token")?.value ||
+      cookieStore.get("__Secure-next-auth.session-token")?.value;
+    let session = sessionToken ? await getCachedSession() : null;
+
+    // Get developers with their recent products
+    const developers = await db
+      .select({
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        name: user.name,
+        image: user.image,
+        bio: user.bio,
+        location: user.location,
+        website: user.website,
+        twitterUrl: user.twitterUrl,
+        instagramUrl: user.instagramUrl,
+        youtubeUrl: user.youtubeUrl,
+        twitchUrl: user.twitchUrl,
+        verified: user.verified,
+        featured: user.featured,
+        specialties: user.specialties,
+        totalProducts: user.totalProducts,
+        totalLikes: user.totalLikes,
+        totalViews: user.totalViews,
+        rating: user.rating,
+        createdAt: user.createdAt,
+      })
+      .from(user)
+      .where(
+        and(eq(user.isDeveloper, true), eq(user.profileVisibility, "public"))
+      )
+      .orderBy(desc(user.featured), desc(user.rating));
+
+    // Get recent products for each developer
+    const developersWithProducts = await Promise.all(
+      developers.map(async (developer) => {
+        const recentProducts = await db
+          .select({
+            id: products.id,
+            title: products.title,
+            thumbnail: products.thumbnail,
+            price: products.price,
+            originalPrice: products.originalPrice,
+            likes: products.likes,
+          })
+          .from(products)
+          .where(
+            and(
+              eq(products.userId, developer.id),
+              eq(products.status, "published")
+            )
+          )
+          .orderBy(desc(products.createdAt))
+          .limit(2);
+
+        // Fetch likes count for each product
+        const productsWithLikes = await Promise.all(
+          recentProducts.map(async (p) => {
+            const likesCount = await db
+              .select({ count: sql`count(*)`.mapWith(Number) })
+              .from(productLikes)
+              .where(eq(productLikes.productId, p.id));
+            return {
+              ...p,
+              imageUrl: p.thumbnail,
+              likesCount: likesCount[0]?.count || 0,
+            };
+          })
+        );
+
+        return {
+          ...developer,
+          displayName: developer.displayName || developer.name,
+          socialLinks: {
+            twitter: developer.twitterUrl,
+            instagram: developer.instagramUrl,
+            youtube: developer.youtubeUrl,
+            twitch: developer.twitchUrl,
+            website: developer.website,
+          },
+          joinedDate: developer.createdAt,
+          recentProducts: productsWithLikes,
+        };
+      })
+    );
+
+    return NextResponse.json(developersWithProducts);
+  } catch (error) {
+    console.error("Error fetching developers:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch developers" },
+      { status: 500 }
+    );
+  }
+}

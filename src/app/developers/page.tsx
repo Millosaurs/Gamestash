@@ -8,228 +8,80 @@ import {
   MapPin,
   Calendar,
   CheckCircle,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/header";
-
-// Mock developers data
-const developers = [
-  {
-    id: 1,
-    username: "NeonGamer",
-    displayName: "Alex Chen",
-    avatar:
-      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face",
-    bio: "Professional gaming setup designer with 5+ years of experience. Specializing in RGB and high-performance builds.",
-    location: "San Francisco, CA",
-    joinedDate: "2019-03-15",
-    totalProducts: 12,
-    totalLikes: 15420,
-    totalViews: 125000,
-    rating: 4.8,
-    specialties: ["RGB", "Gaming", "High-end"],
-    verified: true,
-    featured: true,
-    socialLinks: {
-      twitter: "https://twitter.com/neongamer",
-      instagram: "https://instagram.com/neongamer",
-      website: "https://neongamer.dev",
-    },
-    recentProducts: [
-      {
-        id: 1,
-        title: "Ultimate Minecraft RGB Battlestation",
-        imageUrl:
-          "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=300&h=200&fit=crop&q=80",
-        price: 1299,
-        originalPrice: 1499,
-        likes: 1247,
-      },
-      {
-        id: 9,
-        title: "Rust Survival Gaming Setup",
-        imageUrl:
-          "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=300&h=200&fit=crop&q=80",
-        price: 1599,
-        originalPrice: 1799,
-        likes: 892,
-      },
-    ],
-  },
-  {
-    id: 2,
-    username: "CleanDesk",
-    displayName: "Sarah Johnson",
-    avatar:
-      "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
-    bio: "Minimalist design enthusiast. Creating clean, productive workspaces that inspire creativity and focus.",
-    location: "Austin, TX",
-    joinedDate: "2020-01-20",
-    totalProducts: 8,
-    totalLikes: 9200,
-    totalViews: 78000,
-    rating: 4.6,
-    specialties: ["Minimal", "Clean", "Productivity"],
-    verified: true,
-    featured: false,
-    socialLinks: {
-      instagram: "https://instagram.com/cleandesk",
-      website: "https://cleandesk.co",
-    },
-    recentProducts: [
-      {
-        id: 2,
-        title: "Roblox Creator Studio Setup",
-        imageUrl:
-          "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=300&h=200&fit=crop&q=80",
-        price: 999,
-        originalPrice: 1199,
-        likes: 892,
-      },
-    ],
-  },
-  {
-    id: 3,
-    username: "CreatorPro",
-    displayName: "Mike Rodriguez",
-    avatar:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-    bio: "Content creator and professional gamer. Building setups that perform under pressure and look amazing on stream.",
-    location: "Los Angeles, CA",
-    joinedDate: "2018-11-10",
-    totalProducts: 15,
-    totalLikes: 22100,
-    totalViews: 180000,
-    rating: 4.9,
-    specialties: ["Professional", "Streaming", "Gaming"],
-    verified: true,
-    featured: true,
-    socialLinks: {
-      twitter: "https://twitter.com/creatorpro",
-      youtube: "https://youtube.com/creatorpro",
-      twitch: "https://twitch.tv/creatorpro",
-    },
-    recentProducts: [
-      {
-        id: 4,
-        title: "Rust Survival Gaming Setup with Dual Monitors",
-        imageUrl:
-          "https://images.unsplash.com/photo-1547394765-185e1e68f34e?w=300&h=200&fit=crop&q=80",
-        price: 1499,
-        originalPrice: 1699,
-        likes: 2034,
-      },
-    ],
-  },
-  {
-    id: 4,
-    username: "TechMaster",
-    displayName: "David Kim",
-    avatar:
-      "https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?w=150&h=150&fit=crop&crop=face",
-    bio: "Tech enthusiast and hardware expert. Pushing the boundaries of what's possible with cutting-edge technology.",
-    location: "Seattle, WA",
-    joinedDate: "2019-07-22",
-    totalProducts: 10,
-    totalLikes: 18900,
-    totalViews: 145000,
-    rating: 4.7,
-    specialties: ["High-end", "Tech", "Innovation"],
-    verified: true,
-    featured: false,
-    socialLinks: {
-      twitter: "https://twitter.com/techmaster",
-      website: "https://techmaster.dev",
-    },
-    recentProducts: [
-      {
-        id: 6,
-        title: "FiveM Roleplay Command Center",
-        imageUrl:
-          "https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=300&h=200&fit=crop&q=80",
-        price: 1799,
-        originalPrice: 1999,
-        likes: 3240,
-      },
-    ],
-  },
-  {
-    id: 5,
-    username: "BudgetGamer",
-    displayName: "Emma Wilson",
-    avatar:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
-    bio: "Proving that great gaming setups don't have to break the bank. Affordable builds that deliver maximum value.",
-    location: "Denver, CO",
-    joinedDate: "2020-09-05",
-    totalProducts: 6,
-    totalLikes: 12500,
-    totalViews: 95000,
-    rating: 4.3,
-    specialties: ["Budget", "Value", "Starter"],
-    verified: false,
-    featured: false,
-    socialLinks: {
-      youtube: "https://youtube.com/budgetgamer",
-    },
-    recentProducts: [
-      {
-        id: 8,
-        title: "Budget FiveM Racing Setup",
-        imageUrl:
-          "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=300&h=200&fit=crop&q=80",
-        price: 399,
-        originalPrice: 499,
-        likes: 2340,
-      },
-    ],
-  },
-  {
-    id: 6,
-    username: "WhiteSpace",
-    displayName: "James Park",
-    avatar:
-      "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=150&h=150&fit=crop&crop=face",
-    bio: "Minimalist designer focused on creating serene, distraction-free workspaces that promote deep focus.",
-    location: "Portland, OR",
-    joinedDate: "2021-02-14",
-    totalProducts: 4,
-    totalLikes: 7800,
-    totalViews: 52000,
-    rating: 4.5,
-    specialties: ["Minimal", "Clean", "Zen"],
-    verified: false,
-    featured: false,
-    socialLinks: {
-      instagram: "https://instagram.com/whitespace",
-    },
-    recentProducts: [
-      {
-        id: 7,
-        title: "Minimalist Rust Gaming Setup",
-        imageUrl:
-          "https://images.unsplash.com/photo-1541746972996-4e0b0f93e586?w=300&h=200&fit=crop&q=80",
-        price: 1199,
-        originalPrice: 1399,
-        likes: 1890,
-      },
-    ],
-  },
-];
-
-// Sort developers - featured first, then by rating
-const sortedDevelopers = [...developers].sort((a, b) => {
-  if (a.featured && !b.featured) return -1;
-  if (!a.featured && b.featured) return 1;
-  return b.rating - a.rating;
-});
+import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 
 export default function DevelopersPage() {
-  const handleDeveloperClick = (developerId: number) => {
-    window.location.href = `/developers/${developerId}`;
-  };
+  const [developers, setDevelopers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [developerStats, setDeveloperStats] = useState<Record<string, any>>({});
+  const router = useRouter();
+
+  useEffect(() => {
+    async function fetchDevelopers() {
+      try {
+        const response = await fetch("/api/developers");
+        if (response.ok) {
+          const data = await response.json();
+          setDevelopers(data);
+        }
+      } catch (error) {
+        console.error("Error fetching developers:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchDevelopers();
+  }, []);
+
+  useEffect(() => {
+    async function fetchAllDeveloperStats() {
+      const stats: Record<string, any> = {};
+      await Promise.all(
+        developers.map(async (dev) => {
+          try {
+            const res = await fetch(`/api/developers/${dev.id}/analytics`);
+            if (res.ok) {
+              const data = await res.json();
+              stats[dev.id] = data.totals;
+            }
+          } catch {}
+        })
+      );
+      setDeveloperStats(stats);
+    }
+    if (developers.length > 0) fetchAllDeveloperStats();
+  }, [developers]);
+
+  // Sort developers - featured first, then by rating (move inside component, useMemo for perf)
+  const sortedDevelopers = useMemo(() => {
+    return [...developers].sort((a, b) => {
+      if (a.featured && !b.featured) return -1;
+      if (!a.featured && b.featured) return 1;
+      return Number(b.rating) - Number(a.rating);
+    });
+  }, [developers]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh]">
+        <Loader2 className="animate-spin w-8 h-8 text-primary mb-2" />
+        <span className="text-muted-foreground">Loading developers...</span>
+      </div>
+    );
+  }
+
+  // Handle developer card click (for now, just log the developer id)
+  function handleDeveloperClick(developerId: string) {
+    router.push(`/developers/${developerId}`);
+  }
 
   return (
     <div className="min-h-screen bg-background font-sans">
@@ -291,15 +143,28 @@ export default function DevelopersPage() {
                 <CardContent className="p-6 flex flex-col items-center">
                   {/* Avatar with overlay badges */}
                   <div className="relative mb-3 w-20 h-20">
-                    <img
-                      src={developer.avatar || "/placeholder.svg"}
-                      alt={developer.displayName}
-                      className={`w-20 h-20 rounded-full object-cover border-4 ${
-                        developer.featured
-                          ? "border-primary shadow-lg"
-                          : "border-muted"
-                      }`}
-                    />
+                    {developer.image ? (
+                      <img
+                        src={developer.image}
+                        alt={developer.displayName}
+                        className={`w-20 h-20 rounded-full object-cover border-4 ${
+                          developer.featured
+                            ? "border-primary shadow-lg"
+                            : "border-muted"
+                        }`}
+                      />
+                    ) : (
+                      <div
+                        className={`w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold bg-muted text-foreground border-4 ${
+                          developer.featured
+                            ? "border-primary shadow-lg"
+                            : "border-muted"
+                        }`}
+                        aria-label={developer.displayName}
+                      >
+                        {developer.displayName?.charAt(0)?.toUpperCase() || "?"}
+                      </div>
+                    )}
                     <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
                       {developer.featured && (
                         <Badge className="bg-primary text-primary-foreground border-0 text-xs px-2 py-0.5 shadow">
@@ -335,42 +200,54 @@ export default function DevelopersPage() {
 
                   {/* Specialties */}
                   <div className="flex flex-wrap justify-center gap-1 mb-3">
-                    {developer.specialties.slice(0, 3).map((specialty) => (
-                      <Badge
-                        key={specialty}
-                        variant="outline"
-                        className="text-xs"
-                      >
-                        {specialty}
-                      </Badge>
-                    ))}
+                    {(developer.specialties || [])
+                      .slice(0, 3)
+                      .map((specialty: string, idx: number) => (
+                        <Badge
+                          key={specialty + idx}
+                          variant="outline"
+                          className="text-xs"
+                        >
+                          {specialty}
+                        </Badge>
+                      ))}
                   </div>
 
                   {/* Stats */}
                   <div className="flex justify-center gap-6 text-center text-xs mb-3 w-full">
                     <div>
                       <div className="font-bold text-foreground">
-                        {developer.totalProducts}
+                        {developerStats[developer.id]?.totalProducts ??
+                          developer.totalProducts}
                       </div>
                       <div className="text-muted-foreground">Products</div>
+                    </div>
+                    <div>
+                      <div className="font-bold text-foreground">
+                        {developerStats[
+                          developer.id
+                        ]?.totalViews?.toLocaleString() ??
+                          developer.totalViews?.toLocaleString()}
+                      </div>
+                      <div className="text-muted-foreground">Views</div>
                     </div>
                     <div>
                       <div className="flex items-center justify-center gap-1">
                         <Heart className="h-3 w-3 text-red-400" />
                         <span className="font-bold text-foreground">
-                          {developer.totalLikes.toLocaleString()}
+                          {developerStats[
+                            developer.id
+                          ]?.totalLikes?.toLocaleString() ??
+                            developer.totalLikes?.toLocaleString()}
                         </span>
                       </div>
                       <div className="text-muted-foreground">Likes</div>
                     </div>
                     <div>
-                      <div className="flex items-center justify-center gap-1">
-                        <Star className="h-3 w-3 fill-current text-yellow-400" />
-                        <span className="font-bold text-foreground">
-                          {developer.rating}
-                        </span>
+                      <div className="font-bold text-foreground">
+                        {developerStats[developer.id]?.totalSales ?? 0}
                       </div>
-                      <div className="text-muted-foreground">Rating</div>
+                      <div className="text-muted-foreground">Sales</div>
                     </div>
                   </div>
 
@@ -397,33 +274,37 @@ export default function DevelopersPage() {
                         Recent Work
                       </h4>
                       <div className="grid grid-cols-2 gap-2">
-                        {developer.recentProducts.slice(0, 2).map((product) => (
-                          <div
-                            key={product.id}
-                            className="relative aspect-[16/10] rounded-lg overflow-hidden"
-                          >
-                            <img
-                              src={product.imageUrl || "/placeholder.svg"}
-                              alt={product.title}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/50" />
-                            <div className="absolute bottom-1 left-1 right-1">
-                              <div className="text-xs text-white font-medium line-clamp-1 mb-1">
-                                {product.title}
-                              </div>
-                              <div className="flex items-center justify-between text-xs">
-                                <span className="text-white/80">
-                                  ${product.price}
-                                </span>
-                                <div className="flex items-center gap-1 text-white/80">
-                                  <Heart className="h-3 w-3" />
-                                  <span>{product.likes}</span>
+                        {(developer.recentProducts || [])
+                          .slice(0, 2)
+                          .map((product: any) => (
+                            <div
+                              key={product.id}
+                              className="relative aspect-[16/10] rounded-lg overflow-hidden"
+                            >
+                              <img
+                                src={product.imageUrl || "/placeholder.svg"}
+                                alt={product.title}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/50" />
+                              <div className="absolute bottom-1 left-1 right-1">
+                                <div className="text-xs text-white font-medium line-clamp-1 mb-1">
+                                  {product.title}
+                                </div>
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="text-white/80">
+                                    ${product.price}
+                                  </span>
+                                  <div className="flex items-center gap-1 text-white/80">
+                                    <Heart className="h-3 w-3" />
+                                    <span>
+                                      {product.likesCount ?? product.likes}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
                       </div>
                     </div>
                   )}
