@@ -3,13 +3,16 @@ import { db } from "@/db";
 import { products } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 
-export async function GET(request: Request, contextOrParams: any) {
+export async function GET(contextOrParams: any) {
   let userId: string | undefined;
-  // Support both { params } and context.params
-  if (contextOrParams?.params?.id) {
-    userId = contextOrParams.params.id;
-  } else if (contextOrParams?.id) {
-    userId = contextOrParams.id;
+
+  // Await params if it's a Promise (Next.js 15 dynamic routes)
+  const params = contextOrParams?.params
+    ? await contextOrParams.params
+    : contextOrParams;
+
+  if (params?.id) {
+    userId = params.id;
   }
 
   try {

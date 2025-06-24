@@ -263,11 +263,16 @@ export default function DevelopersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Specialties</SelectItem>
-                  {allSpecialties.map((specialty) => (
-                    <SelectItem key={specialty} value={specialty}>
-                      {specialty}
-                    </SelectItem>
-                  ))}
+                  {allSpecialties
+                    .filter(
+                      (specialty) =>
+                        typeof specialty === "string" && specialty.trim() !== ""
+                    )
+                    .map((specialty) => (
+                      <SelectItem key={specialty} value={specialty}>
+                        {specialty}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
 

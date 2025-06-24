@@ -220,6 +220,7 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
           maxSizeMB: 1.5,
           maxWidthOrHeight: 1920,
           useWebWorker: true,
+          initialQuality: 0.1,
         });
         const reader = new FileReader();
         reader.onload = (e) => {

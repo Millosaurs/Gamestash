@@ -10,6 +10,10 @@ import {
   List,
   X,
   SlidersHorizontal,
+  TrendingUp,
+  Heart,
+  Eye,
+  Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -25,6 +29,14 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import Header from "@/components/header";
 import Image from "next/image";
+import { createCache } from "@/lib/utils";
+
+// Cache for stats (1 min TTL)
+const statsCache = createCache<{
+  totalLikes: number;
+  totalViews: number;
+  totalProducts: number;
+}>(60000);
 
 // Mock data for filters and products
 const gameFilters = [
@@ -217,7 +229,7 @@ export default function ExplorePage() {
           params.set("games", selectedGames.join(","));
         if (selectedCategories.length > 0)
           params.set("categories", selectedCategories.join(","));
-        if (priceRange[0] > 0 || priceRange[1] < 2000) {
+        if (priceRange[0] > 0 || priceRange[1] < 10000) {
           params.set("priceRange", JSON.stringify(priceRange));
         }
         params.set("sortBy", sortBy);
@@ -261,7 +273,7 @@ export default function ExplorePage() {
   const clearAllFilters = () => {
     setSelectedGames([]);
     setSelectedCategories([]);
-    setPriceRange([0, 2000]);
+    setPriceRange([0, 10000]);
     setSearchQuery("");
   };
 
@@ -338,7 +350,7 @@ export default function ExplorePage() {
   const activeFiltersCount =
     selectedGames.length +
     selectedCategories.length +
-    (priceRange[0] > 0 || priceRange[1] < 2000 ? 1 : 0) +
+    (priceRange[0] > 0 || priceRange[1] < 10000 ? 1 : 0) +
     (searchQuery ? 1 : 0);
 
   const ProductsGrid = () => {
@@ -394,6 +406,13 @@ export default function ExplorePage() {
                     : "relative w-40 h-28 flex-shrink-0"
                 }
               >
+                {/* Featured badge */}
+                {product.featured && (
+                  <Badge className="absolute top-3 left-3 z-10 bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0 shadow-lg">
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    Featured
+                  </Badge>
+                )}
                 <Image
                   src={
                     product.imageUrl || product.thumbnail || "/placeholder.svg"
@@ -458,269 +477,253 @@ export default function ExplorePage() {
     );
   };
 
+  // --- HERO & STATS ---
+  // Calculate stats for hero section with cache
+  const cacheKey = JSON.stringify(sortedAndFilteredProducts.map((p) => p.id));
+  let cachedStats = statsCache.get(cacheKey);
+  let totalLikes, totalViews, totalProducts;
+  if (cachedStats) {
+    ({ totalLikes, totalViews, totalProducts } = cachedStats);
+  } else {
+    totalLikes = sortedAndFilteredProducts.reduce(
+      (sum, p) => sum + (p.likes || 0),
+      0
+    );
+    totalViews = sortedAndFilteredProducts.reduce(
+      (sum, p) => sum + (p.views || 0),
+      0
+    );
+    totalProducts = sortedAndFilteredProducts.length;
+    statsCache.set(cacheKey, { totalLikes, totalViews, totalProducts });
+  }
+
   return (
-    <div className="min-h-screen bg-background font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 font-sans">
       {/* Header */}
-      <Header />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <Header />
+      </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex gap-8">
-          {/* Sidebar Filters - Desktop */}
-          <div className="hidden lg:block w-80 flex-shrink-0">
-            <div className="sticky top-24 space-y-6">
-              {/* Search */}
-              <div>
-                <h3 className="font-semibold text-foreground mb-3 font-display">
-                  Search
-                </h3>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Search setups..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-
-              {/* Price Range */}
-              <div>
-                <h3 className="font-semibold text-foreground mb-3 font-display">
-                  Price Range
-                </h3>
-                <div className="px-2">
-                  <Slider
-                    value={priceRange}
-                    onValueChange={setPriceRange}
-                    max={2000}
-                    min={0}
-                    step={50}
-                    className="mb-4"
-                  />
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>${priceRange[0]}</span>
-                    <span>${priceRange[1]}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Games Filter */}
-              <div>
-                <h3 className="font-semibold text-foreground mb-3 font-display">
-                  Games
-                </h3>
-                <div className="space-y-2">
-                  {gameFilters.map((game) => (
-                    <button
-                      key={game.id}
-                      onClick={() => handleGameFilter(game.id)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg w-full text-left transition-colors duration-150 ${
-                        selectedGames.includes(game.id)
-                          ? "bg-primary/10 text-primary font-semibold"
-                          : "hover:bg-muted/60"
-                      }`}
-                      aria-pressed={selectedGames.includes(game.id)}
-                      type="button"
-                    >
-                      <Image
-                        src={
-                          game.id === "minecraft"
-                            ? "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?w=40&h=40&fit=crop&q=80"
-                            : game.id === "roblox"
-                            ? "https://images.unsplash.com/photo-1614294149010-950b698f72c0?w=40&h=40&fit=crop&q=80"
-                            : game.id === "fivem"
-                            ? "https://images.unsplash.com/photo-1542751110-97427bbecf20?w=40&h=40&fit=crop&q=80"
-                            : game.id === "rust"
-                            ? "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=40&h=40&fit=crop&q=80"
-                            : "/placeholder.svg"
-                        }
-                        alt={game.name}
-                        width={32}
-                        height={32}
-                        className="rounded-full object-cover"
-                        sizes="32px"
-                      />
-                      <span className="flex-1">{game.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {game.count}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Categories Filter */}
-              <div>
-                <h3 className="font-semibold text-foreground mb-3 font-display">
-                  Categories
-                </h3>
-                <div className="space-y-2">
-                  {categoryFilters.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => handleCategoryFilter(cat.id)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg w-full text-left transition-colors duration-150 ${
-                        selectedCategories.includes(cat.id)
-                          ? "bg-primary/10 text-primary font-semibold"
-                          : "hover:bg-muted/60"
-                      }`}
-                      aria-pressed={selectedCategories.includes(cat.id)}
-                      type="button"
-                    >
-                      <span className="flex-1">{cat.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {cat.count}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Clear Filters */}
-              {activeFiltersCount > 0 && (
-                <Button
-                  variant="outline"
-                  onClick={clearAllFilters}
-                  className="w-full"
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Clear All Filters ({activeFiltersCount})
-                </Button>
-              )}
-            </div>
+      {/* Hero Section */}
+      <section className="relative py-16 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5"></div>
+        <div className="absolute top-0 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl"></div>
+        <div className="relative mx-auto max-w-4xl px-4 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary font-medium text-sm mb-6">
+            <Sparkles className="h-4 w-4" />
+            Discover Epic Setups
           </div>
-
-          {/* Main Content */}
-          <div className="flex-1 min-w-0">
-            {/* Top Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-              <div className="flex items-center gap-4">
-                <h2 className="text-2xl font-bold text-foreground font-display">
-                  Explore Setups
-                </h2>
-                <span className="text-muted-foreground">
-                  {sortedAndFilteredProducts.length.toLocaleString()} results
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 font-display bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+            Explore Gaming Setups
+          </h1>
+          <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
+            Find, filter, and get inspired by the best gaming setups from our
+            creative community. Use the filters to discover your perfect match.
+          </p>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
+            <div className="bg-background/60 backdrop-blur-sm rounded-2xl p-4 border border-border/50 hover:bg-background/80 transition-all duration-300">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Grid3X3 className="h-5 w-5 text-primary" />
+                <span className="text-2xl font-bold text-foreground">
+                  {totalProducts}
                 </span>
               </div>
-
-              <div className="flex items-center gap-3">
-                {/* Mobile Filter Button */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="lg:hidden"
-                  onClick={() => setShowMobileFilters(true)}
-                >
-                  <SlidersHorizontal className="mr-2 h-4 w-4" />
-                  Filters
-                  {activeFiltersCount > 0 && (
-                    <Badge
-                      variant="secondary"
-                      className="ml-2 h-5 w-5 p-0 text-xs"
-                    >
-                      {activeFiltersCount}
-                    </Badge>
-                  )}
-                </Button>
-
-                {/* Sort */}
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="popular">Most Popular</SelectItem>
-                    <SelectItem value="newest">Newest</SelectItem>
-                    <SelectItem value="price-low">
-                      Price: Low to High
-                    </SelectItem>
-                    <SelectItem value="price-high">
-                      Price: High to Low
-                    </SelectItem>
-                    <SelectItem value="rating">Highest Rated</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {/* View Toggle */}
-                <div className="flex border border-border rounded-lg p-1">
-                  <Button
-                    variant={viewMode === "grid" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setViewMode("grid")}
-                    className="h-8 w-8 p-0"
-                  >
-                    <Grid3X3 className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === "list" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setViewMode("list")}
-                    className="h-8 w-8 p-0"
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+              <div className="text-sm text-muted-foreground">Setups</div>
             </div>
-
-            {/* Active Filters */}
-            {activeFiltersCount > 0 && (
-              <div className="flex flex-wrap gap-2 mb-6">
-                {selectedGames.map((gameId) => {
-                  const game = gameFilters.find((g) => g.id === gameId);
-                  return (
-                    <Badge key={gameId} variant="secondary" className="gap-1">
-                      {game?.name}
-                      <X
-                        className="h-3 w-3 cursor-pointer"
-                        onClick={() => handleGameFilter(gameId)}
-                      />
-                    </Badge>
-                  );
-                })}
-                {selectedCategories.map((categoryId) => {
-                  const category = categoryFilters.find(
-                    (c) => c.id === categoryId
-                  );
-                  return (
-                    <Badge
-                      key={categoryId}
-                      variant="secondary"
-                      className="gap-1"
-                    >
-                      {category?.name}
-                      <X
-                        className="h-3 w-3 cursor-pointer"
-                        onClick={() => handleCategoryFilter(categoryId)}
-                      />
-                    </Badge>
-                  );
-                })}
-                {(priceRange[0] > 0 || priceRange[1] < 2000) && (
-                  <Badge variant="secondary" className="gap-1">
-                    ${priceRange[0]} - ${priceRange[1]}
-                    <X
-                      className="h-3 w-3 cursor-pointer"
-                      onClick={() => setPriceRange([0, 2000])}
-                    />
-                  </Badge>
-                )}
+            <div className="bg-background/60 backdrop-blur-sm rounded-2xl p-4 border border-border/50 hover:bg-background/80 transition-all duration-300">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Heart className="h-5 w-5 text-red-400" />
+                <span className="text-2xl font-bold text-foreground">
+                  {totalLikes.toLocaleString()}
+                </span>
               </div>
-            )}
-
-            {/* Products Grid */}
-            <ProductsGrid />
-
-            {/* Load More */}
-            <div className="text-center mt-12">
-              <Button variant="outline" size="lg" className="px-8">
-                Load More Results
-              </Button>
+              <div className="text-sm text-muted-foreground">Total Likes</div>
+            </div>
+            <div className="bg-background/60 backdrop-blur-sm rounded-2xl p-4 border border-border/50 hover:bg-background/80 transition-all duration-300">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Eye className="h-5 w-5 text-blue-400" />
+                <span className="text-2xl font-bold text-foreground">
+                  {totalViews > 1000
+                    ? `${(totalViews / 1000).toFixed(1)}k`
+                    : totalViews}
+                </span>
+              </div>
+              <div className="text-sm text-muted-foreground">Total Views</div>
+            </div>
+            <div className="bg-background/60 backdrop-blur-sm rounded-2xl p-4 border border-border/50 hover:bg-background/80 transition-all duration-300">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Award className="h-5 w-5 text-yellow-400" />
+                <span className="text-2xl font-bold text-foreground">
+                  {products.filter((p) => p.featured).length}
+                </span>
+              </div>
+              <div className="text-sm text-muted-foreground">Featured</div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Filters Bar */}
+      <section className="py-8 border-b border-border/50">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex flex-col sm:flex-row gap-4 flex-1">
+              {/* Search */}
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search setups..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-background/50 backdrop-blur-sm border-border/50 focus:bg-background"
+                />
+              </div>
+              {/* Price Range */}
+              <div className="flex items-center gap-2 bg-background/50 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/50">
+                <span className="text-sm text-muted-foreground">Price:</span>
+                <Slider
+                  value={priceRange}
+                  onValueChange={setPriceRange}
+                  max={10000}
+                  min={0}
+                  step={50}
+                  className="w-32"
+                />
+                <span className="text-xs text-muted-foreground">
+                  ${priceRange[0]} - ${priceRange[1]}
+                </span>
+              </div>
+              {/* Games Filter */}
+              <Select
+                value={selectedGames[0] || ""}
+                onValueChange={(v) => handleGameFilter(v)}
+              >
+                <SelectTrigger className="w-40 bg-background/50 backdrop-blur-sm border-border/50">
+                  <Grid3X3 className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Games" />
+                </SelectTrigger>
+                <SelectContent>
+                  {gameFilters.map((game) => (
+                    <SelectItem key={game.id} value={game.id}>
+                      {game.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {/* Categories Filter */}
+              <Select
+                value={selectedCategories[0] || ""}
+                onValueChange={(v) => handleCategoryFilter(v)}
+              >
+                <SelectTrigger className="w-40 bg-background/50 backdrop-blur-sm border-border/50">
+                  <List className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoryFilters.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {/* Sort */}
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-40 bg-background/50 backdrop-blur-sm border-border/50">
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="popular">Most Popular</SelectItem>
+                  <SelectItem value="newest">Newest</SelectItem>
+                  <SelectItem value="price-low">Price: Low to High</SelectItem>
+                  <SelectItem value="price-high">Price: High to Low</SelectItem>
+                  <SelectItem value="rating">Highest Rated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-2 bg-background/50 backdrop-blur-sm rounded-lg p-1 border border-border/50">
+              <Button
+                variant={viewMode === "grid" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+                className="h-8 w-8 p-0"
+              >
+                <Grid3X3 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+                className="h-8 w-8 p-0"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          {/* Results count */}
+          <div className="mt-4 text-sm text-muted-foreground">
+            Showing {sortedAndFilteredProducts.length} of {products.length}{" "}
+            setups
+          </div>
+        </div>
+      </section>
+
+      {/* Active Filters */}
+      {activeFiltersCount > 0 && (
+        <div className="flex flex-wrap gap-2 mb-6 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          {selectedGames.map((gameId) => {
+            const game = gameFilters.find((g) => g.id === gameId);
+            return (
+              <Badge key={gameId} variant="secondary" className="gap-1">
+                {game?.name}
+                <X
+                  className="h-3 w-3 cursor-pointer"
+                  onClick={() => handleGameFilter(gameId)}
+                />
+              </Badge>
+            );
+          })}
+          {selectedCategories.map((categoryId) => {
+            const category = categoryFilters.find((c) => c.id === categoryId);
+            return (
+              <Badge key={categoryId} variant="secondary" className="gap-1">
+                {category?.name}
+                <X
+                  className="h-3 w-3 cursor-pointer"
+                  onClick={() => handleCategoryFilter(categoryId)}
+                />
+              </Badge>
+            );
+          })}
+          {(priceRange[0] > 0 || priceRange[1] < 10000) && (
+            <Badge variant="secondary" className="gap-1">
+              ${priceRange[0]} - ${priceRange[1]}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() => setPriceRange([0, 10000])}
+              />
+            </Badge>
+          )}
+        </div>
+      )}
+
+      {/* Products Grid Section */}
+      <section className="py-12">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          {/* Products Grid */}
+          <ProductsGrid />
+          {/* Load More */}
+          <div className="text-center mt-12">
+            <Button variant="outline" size="lg" className="px-8">
+              Load More Results
+            </Button>
+          </div>
+        </div>
+      </section>
 
       {/* Mobile Filters Overlay */}
       {showMobileFilters && (
@@ -769,7 +772,7 @@ export default function ExplorePage() {
                     <Slider
                       value={priceRange}
                       onValueChange={setPriceRange}
-                      max={2000}
+                      max={10000}
                       min={0}
                       step={50}
                       className="mb-4"

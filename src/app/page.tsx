@@ -157,20 +157,30 @@ export default function LandingPage() {
     }
   };
 
+  // --- HERO & STATS ---
+  // Calculate stats for hero section (if you want dynamic, fetch and sum like in /explore)
+  // For now, use the static stats array for display
+
   return (
-    <div className="min-h-screen bg-background font-sans flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 font-sans flex flex-col">
       <Header />
 
       {/* Hero Section */}
-      <section className="flex flex-col items-center justify-center min-h-[60vh] bg-gradient-to-b from-muted/40 to-background border-b border-border/40 px-4">
-        <div className="flex flex-col items-center w-full max-w-2xl">
-          <div className="flex justify-center mb-6"></div>
-          <h1 className="text-4xl sm:text-5xl font-extrabold mb-4 font-display text-foreground tracking-tight text-center">
+      <section className="relative py-20 overflow-hidden flex flex-col items-center justify-center min-h-[60vh] border-b border-border/40 px-4 bg-gradient-to-b from-primary/5 via-background to-muted/20">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-secondary/10 pointer-events-none" />
+        <div className="absolute top-0 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative flex flex-col items-center w-full max-w-2xl z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary font-medium text-sm mb-6">
+            <Sparkles className="h-4 w-4" />
+            Discover Epic Setups
+          </div>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-4 font-display text-foreground tracking-tight text-center bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
             Level Up Your Gaming
             <br />
             Experience
           </h1>
-          <p className="text-muted-foreground mb-10 text-lg text-center">
+          <p className="text-muted-foreground mb-10 text-lg text-center max-w-xl">
             Discover, buy, and get inspired by premium, hand-picked gaming
             setups from the world's best creators.
           </p>
@@ -212,12 +222,17 @@ export default function LandingPage() {
       </section>
 
       {/* Stats Bar */}
-      <section className="w-full bg-muted/30 border-b border-border/40 flex flex-col items-center">
-        <div className="mx-auto w-full max-w-5xl px-4 py-8 flex flex-col items-center">
+      <section className="w-full py-8 bg-background/60 border-b border-border/40 flex flex-col items-center">
+        <div className="mx-auto w-full max-w-5xl px-4 flex flex-col items-center">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 w-full justify-center text-center">
             {stats.map((stat, index) => (
-              <div key={index} className="flex flex-col items-center gap-2">
-                <div className={`p-3 rounded-full bg-muted ${stat.color}`}>
+              <div
+                key={index}
+                className="bg-background/60 backdrop-blur-sm rounded-2xl p-6 border border-border/50 hover:bg-background/80 transition-all duration-300 flex flex-col items-center gap-2 shadow-sm"
+              >
+                <div
+                  className={`p-3 rounded-full ${stat.color} bg-muted/80 mb-2`}
+                >
                   <stat.icon className="h-6 w-6" />
                 </div>
                 <div>

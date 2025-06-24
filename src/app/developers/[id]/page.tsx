@@ -31,6 +31,8 @@ import type { Product } from "@/types/product";
 import { ProductCard } from "@/components/product-card";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import { createCache } from "@/lib/utils";
 
 export type SocialLinks = {
   twitter?: string;
@@ -61,6 +63,9 @@ export type Developer = {
   products: Product[];
 };
 
+// Cache for developer analytics (1 min TTL)
+const analyticsCache = createCache<any>(60000);
+
 export default function DeveloperDetailPage() {
   const params = useParams();
   const [developer, setDeveloper] = useState<Developer | null>(null);
@@ -83,8 +88,15 @@ export default function DeveloperDetailPage() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       if (!params.id) return;
+      const cacheKey = String(params.id);
+      const cached = analyticsCache.get(cacheKey);
+      if (cached) {
+        setAnalytics(cached);
+        return;
+      }
       const res = await fetch(`/api/developers/${params.id}/analytics`);
       const data = await res.json();
+      analyticsCache.set(cacheKey, data.totals);
       setAnalytics(data.totals);
     };
     fetchAnalytics();
@@ -179,7 +191,7 @@ export default function DeveloperDetailPage() {
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
               {/* Avatar Section */}
               <div className="relative flex-shrink-0">
-                <div className="relative">
+                <div className="relative shadow-xl ring-4 ring-primary/10">
                   <img
                     src={
                       (() => {
@@ -195,21 +207,20 @@ export default function DeveloperDetailPage() {
                       })() as string
                     }
                     alt={developer.displayName}
-                    width={120}
-                    height={120}
-                    className={`w-28 h-28 md:w-32 md:h-32 rounded-2xl object-cover border-4 shadow-lg transition-transform hover:scale-105 ${
+                    width={128}
+                    height={128}
+                    className={`w-32 h-32 md:w-36 md:h-36 rounded-2xl object-cover border-4 shadow-lg transition-transform hover:scale-105 ${
                       developer.featured
                         ? "border-primary shadow-primary/25"
                         : "border-background"
                     }`}
                   />
                   {developer.featured && (
-                    <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg">
-                      <Star className="w-4 h-4 fill-current" />
+                    <div className="absolute -top-2 -right-2 bg-gradient-to-br from-primary to-accent text-white rounded-full p-2 shadow-lg animate-pulse">
+                      <Star className="w-5 h-5 fill-current" />
                     </div>
                   )}
                 </div>
-
                 {/* Status Badges */}
                 <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
                   {developer.verified && (
@@ -230,7 +241,7 @@ export default function DeveloperDetailPage() {
                         {developer.displayName}
                       </h1>
                       {developer.featured && (
-                        <Badge className="bg-gradient-to-r from-primary to-accent text-white border-0 px-3 py-1 shadow-lg">
+                        <Badge className="bg-gradient-to-r from-primary to-accent text-white border-0 px-3 py-1 shadow-lg animate-pulse">
                           <Sparkles className="w-3 h-3 mr-1" />
                           Featured
                         </Badge>
@@ -239,7 +250,6 @@ export default function DeveloperDetailPage() {
                     <p className="text-lg text-muted-foreground mb-3">
                       @{developer.username}
                     </p>
-
                     {/* Quick Stats */}
                     <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
                       <div className="flex items-center gap-1.5">
@@ -254,10 +264,7 @@ export default function DeveloperDetailPage() {
                           Joined{" "}
                           {new Date(developer.joinedDate).toLocaleDateString(
                             "en-US",
-                            {
-                              month: "short",
-                              year: "numeric",
-                            }
+                            { month: "short", year: "numeric" }
                           )}
                         </span>
                       </div>
@@ -267,14 +274,13 @@ export default function DeveloperDetailPage() {
                       </div>
                     </div>
                   </div>
-
                   {/* Action Buttons */}
                   <div className="flex flex-wrap gap-3">
                     <Button
                       onClick={handleFollow}
                       variant={isFollowing ? "outline" : "default"}
                       size="lg"
-                      className={`${
+                      className={`$${
                         isFollowing
                           ? "hover:bg-destructive hover:text-destructive-foreground"
                           : ""
@@ -293,7 +299,6 @@ export default function DeveloperDetailPage() {
                     </Button>
                   </div>
                 </div>
-
                 {/* Social Links */}
                 <div className="flex flex-wrap gap-2 mt-4">
                   {developer.socialLinks?.website && (
@@ -325,7 +330,7 @@ export default function DeveloperDetailPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        Twitter
+                        <span className="font-semibold">Twitter</span>
                       </a>
                     </Button>
                   )}
@@ -341,12 +346,54 @@ export default function DeveloperDetailPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        Instagram
+                        <span className="font-semibold">Instagram</span>
+                      </a>
+                    </Button>
+                  )}
+                  {developer.socialLinks?.youtube && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      asChild
+                      className="hover:bg-red-50 hover:text-red-600"
+                    >
+                      <a
+                        href={developer.socialLinks.youtube}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <span className="font-semibold">YouTube</span>
+                      </a>
+                    </Button>
+                  )}
+                  {developer.socialLinks?.twitch && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      asChild
+                      className="hover:bg-purple-50 hover:text-purple-600"
+                    >
+                      <a
+                        href={developer.socialLinks.twitch}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <span className="font-semibold">Twitch</span>
                       </a>
                     </Button>
                   )}
                 </div>
               </div>
+            </div>
+            {/* Back to Developers */}
+            <div className="mt-6">
+              <Link
+                href="/developers"
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Users className="w-4 h-4" />
+                Back to Developers
+              </Link>
             </div>
           </div>
         </div>
@@ -432,7 +479,7 @@ export default function DeveloperDetailPage() {
 
         {/* Enhanced Content Tabs */}
         <Tabs defaultValue="products" className="mb-8">
-          <TabsList className="grid w-full grid-cols-3 h-12 p-1 bg-muted/50 rounded-xl">
+          <TabsList className="grid w-full grid-cols-3 h-12 p-1 bg-muted/50 rounded-xl shadow-sm">
             <TabsTrigger value="products" className="rounded-lg font-medium">
               Products ({developer.products.length})
             </TabsTrigger>
@@ -446,7 +493,7 @@ export default function DeveloperDetailPage() {
 
           <TabsContent value="products" className="mt-8">
             {/* Enhanced View Toggle */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
               <div>
                 <h2 className="text-2xl font-bold text-foreground font-display mb-2">
                   All Products
@@ -478,7 +525,6 @@ export default function DeveloperDetailPage() {
                 </div>
               </div>
             </div>
-
             {/* Products Display */}
             {developer.products.length > 0 ? (
               <div
@@ -529,7 +575,6 @@ export default function DeveloperDetailPage() {
                 <p className="text-muted-foreground text-lg leading-relaxed mb-8">
                   {developer.bio}
                 </p>
-
                 {developer.specialties.length > 0 && (
                   <>
                     <h3 className="text-xl font-semibold text-foreground mb-4 font-display">
@@ -540,16 +585,15 @@ export default function DeveloperDetailPage() {
                         <Badge
                           key={specialty}
                           variant="outline"
-                          className={`text-sm px-4 py-2 rounded-full border-2 font-medium transition-colors hover:bg-primary hover:text-primary-foreground hover:border-primary
-                            ${
-                              index % 4 === 0
-                                ? "border-blue-200 text-blue-700 hover:bg-blue-600"
-                                : index % 4 === 1
-                                ? "border-green-200 text-green-700 hover:bg-green-600"
-                                : index % 4 === 2
-                                ? "border-purple-200 text-purple-700 hover:bg-purple-600"
-                                : "border-orange-200 text-orange-700 hover:bg-orange-600"
-                            }`}
+                          className={`text-sm px-4 py-2 rounded-full border-2 font-medium transition-colors hover:bg-primary hover:text-primary-foreground hover:border-primary ${
+                            index % 4 === 0
+                              ? "border-blue-200 text-blue-700 hover:bg-blue-600"
+                              : index % 4 === 1
+                              ? "border-green-200 text-green-700 hover:bg-green-600"
+                              : index % 4 === 2
+                              ? "border-purple-200 text-purple-700 hover:bg-purple-600"
+                              : "border-orange-200 text-orange-700 hover:bg-orange-600"
+                          }`}
                         >
                           {specialty}
                         </Badge>
@@ -557,7 +601,6 @@ export default function DeveloperDetailPage() {
                     </div>
                   </>
                 )}
-
                 <h3 className="text-xl font-semibold text-foreground mb-4 font-display">
                   Connect & Follow
                 </h3>
@@ -608,6 +651,38 @@ export default function DeveloperDetailPage() {
                         rel="noopener noreferrer"
                       >
                         Follow on Instagram
+                      </a>
+                    </Button>
+                  )}
+                  {developer.socialLinks?.youtube && (
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      asChild
+                      className="hover:bg-red-500 hover:text-white transition-colors"
+                    >
+                      <a
+                        href={developer.socialLinks.youtube}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Follow on YouTube
+                      </a>
+                    </Button>
+                  )}
+                  {developer.socialLinks?.twitch && (
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      asChild
+                      className="hover:bg-purple-500 hover:text-white transition-colors"
+                    >
+                      <a
+                        href={developer.socialLinks.twitch}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Follow on Twitch
                       </a>
                     </Button>
                   )}

@@ -244,20 +244,20 @@ export default function Header() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3 group">
+          <Link href="/" className="flex items-center space-x-3 group min-w-0">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary transition-all duration-200 group-hover:scale-105 group-hover:shadow-lg">
               <FileArchive className="h-5 w-5 text-primary-foreground" />
             </div>
-            <h1 className="text-xl font-bold text-foreground font-display hidden sm:block">
+            <h1 className="text-xl font-bold text-foreground font-display hidden sm:block truncate max-w-[120px]">
               Gamestash
             </h1>
-            <h1 className="text-lg font-bold text-foreground font-display sm:hidden">
+            <h1 className="text-lg font-bold text-foreground font-display sm:hidden truncate max-w-[80px]">
               Gamestash
             </h1>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1">
+          <nav className="hidden md:flex items-center space-x-1 mr-8">
             <Link
               href="/explore"
               className="px-4 py-2 text-sm font-medium text-foreground hover:text-primary hover:bg-accent rounded-lg transition-all duration-200"
@@ -279,7 +279,7 @@ export default function Header() {
           </nav>
 
           {/* Desktop Right Section */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3 min-w-[120px] justify-end">
             <ThemeToggle />
             {session?.user ? (
               <DropdownMenu>
@@ -343,7 +343,7 @@ export default function Header() {
             ) : (
               <Button
                 onClick={() => (window.location.href = "/auth")}
-                className="h-10 px-4 rounded-lg transition-all duration-200 hover:shadow-md"
+                className="h-10 px-4 rounded-lg transition-all duration-200 hover:shadow-md w-full"
               >
                 <User className="mr-2 h-4 w-4" />
                 <span className="hidden sm:inline">Sign In</span>
