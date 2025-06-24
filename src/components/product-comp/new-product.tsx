@@ -117,7 +117,7 @@ const ProductPreview = ({
                     key={index}
                     type="button"
                     onClick={() => setCurrentImageIndex(index)}
-                    className={`flex-shrink-0 w-16 h-14 rounded border-2 overflow-hidden relative ${
+                    className={`flex-shrink-0 relative w-16 aspect-video rounded border-2 overflow-hidden ${
                       currentImageIndex === index
                         ? "border-primary"
                         : "border-border"
@@ -219,6 +219,10 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [isCroppingThumbnail, setIsCroppingThumbnail] = useState(true);
+  const [pendingAdditionalImages, setPendingAdditionalImages] = useState<
+    string[]
+  >([]);
 
   function isValidYouTubeUrl(url: string) {
     return /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}(&.*)?$/.test(
@@ -251,40 +255,60 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
       reader.onload = (e) => {
         setCropImageSrc(e.target?.result as string);
         setShowCrop(true);
+        setIsCroppingThumbnail(true);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // Save cropped image as thumbnail
-  const handleCropSave = async () => {
-    if (!cropImageSrc || !croppedAreaPixels) return;
-    const croppedImage = await getCroppedImg(cropImageSrc, croppedAreaPixels);
-    setThumbnail(croppedImage);
-    setShowCrop(false);
-    setCropImageSrc(null);
-  };
-
-  // Compress and upload additional images
+  // Show cropper when user selects additional images
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const files = Array.from(event.target.files || []);
-    for (const file of files) {
-      try {
-        const compressedFile = await imageCompression(file, {
-          maxSizeMB: 1.5,
-          maxWidthOrHeight: 1920,
-          useWebWorker: true,
-        });
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setImages((prev) => [...prev, e.target?.result as string]);
-        };
-        reader.readAsDataURL(compressedFile);
-      } catch (error) {
-        toast.error("Image compression failed");
-      }
+    const availableSlots = 5 - images.length;
+    const filesToProcess = files.slice(0, availableSlots);
+
+    if (filesToProcess.length > 0) {
+      // Read all files as data URLs
+      const fileReaders = filesToProcess.map(
+        (file) =>
+          new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target?.result as string);
+            reader.readAsDataURL(file);
+          })
+      );
+      const dataUrls = await Promise.all(fileReaders);
+      setPendingAdditionalImages(dataUrls);
+      setIsCroppingThumbnail(false);
+      setCropImageSrc(dataUrls[0]);
+      setShowCrop(true);
+    }
+  };
+
+  // Save cropped image as thumbnail or additional image
+  const handleCropSave = async () => {
+    if (!cropImageSrc || !croppedAreaPixels) return;
+    const croppedImage = await getCroppedImg(cropImageSrc, croppedAreaPixels);
+
+    if (isCroppingThumbnail) {
+      setThumbnail(croppedImage);
+      setShowCrop(false);
+      setCropImageSrc(null);
+    } else {
+      setImages((prev) => [...prev, croppedImage]);
+      setPendingAdditionalImages((prev) => {
+        const next = prev.slice(1);
+        if (next.length > 0) {
+          setCropImageSrc(next[0]);
+          setShowCrop(true);
+        } else {
+          setShowCrop(false);
+          setCropImageSrc(null);
+        }
+        return next;
+      });
     }
   };
 
@@ -615,7 +639,7 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
                   {images.map((img, idx) => (
                     <div
                       key={idx}
-                      className="relative w-24 h-24 rounded-lg overflow-hidden border"
+                      className="relative w-24 aspect-video rounded-lg overflow-hidden border"
                     >
                       <Image
                         src={img}
@@ -644,13 +668,17 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
                     />
                     <Button
                       variant="outline"
-                      size="icon"
-                      className="w-24 h-24 flex flex-col items-center justify-center"
+                      className="w-24 h-20 flex flex-col items-center justify-center"
                       onClick={() =>
-                        document
-                          .getElementById("additional-images-upload")
-                          ?.click()
+                        images.length < 5
+                          ? document
+                              .getElementById("additional-images-upload")
+                              ?.click()
+                          : toast.error(
+                              "You can upload up to 5 additional images only."
+                            )
                       }
+                      disabled={images.length >= 5}
                     >
                       <ImagePlus className="w-8 h-8 mb-1" />
                       <span className="text-xs">Add</span>
@@ -658,7 +686,8 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  You can upload multiple images. PNG, JPG up to 10MB each.
+                  You can upload up to 5 additional images. PNG, JPG up to 10MB
+                  each.
                 </p>
               </div>
             </CardContent>
