@@ -41,6 +41,7 @@
     "radix-ui": "^1.4.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-easy-crop": "^5.4.2",
     "react-markdown": "^10.1.0",
     "react-mde": "^11.5.0",
     "recharts": "^2.15.3",

@@ -27,6 +27,8 @@ import { createProduct, CreateProductData } from "@/lib/actions/products";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
 import Image from "next/image";
+import Cropper from "react-easy-crop";
+import { getCroppedImg } from "@/lib/cropImage";
 
 const gameOptions = [
   { value: "minecraft", label: "Minecraft" },
@@ -45,6 +47,32 @@ const categoryOptions = [
   { value: "premium", label: "Premium" },
   { value: "streaming", label: "Streaming" },
 ];
+
+// Simple modal for cropping
+function Modal({
+  open,
+  onClose,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div className="bg-background rounded-lg shadow-lg p-4 max-w-lg w-full relative">
+        <button
+          className="absolute top-2 right-2 text-foreground"
+          onClick={onClose}
+        >
+          <X className="w-5 h-5" />
+        </button>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 // Preview Component
 const ProductPreview = ({
@@ -74,7 +102,7 @@ const ProductPreview = ({
         {/* Image Gallery */}
         {allImages.length > 0 && (
           <div className="space-y-2">
-            <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+            <div className="relative w-full aspect-video bg-muted rounded-lg overflow-hidden">
               <Image
                 src={allImages[currentImageIndex] || "/placeholder.svg"}
                 alt="Product preview"
@@ -87,8 +115,9 @@ const ProductPreview = ({
                 {allImages.map((image, index) => (
                   <button
                     key={index}
+                    type="button"
                     onClick={() => setCurrentImageIndex(index)}
-                    className={`flex-shrink-0 w-16 h-9 rounded border-2 overflow-hidden ${
+                    className={`flex-shrink-0 w-16 h-14 rounded border-2 overflow-hidden relative ${
                       currentImageIndex === index
                         ? "border-primary"
                         : "border-border"
@@ -112,11 +141,9 @@ const ProductPreview = ({
           <h2 className="text-xl font-bold font-display">
             {formData.title || "Product Title"}
           </h2>
-
           {formData.price && (
             <p className="text-2xl font-bold text-primary">${formData.price}</p>
           )}
-
           <div className="flex gap-2 flex-wrap">
             {formData.game && (
               <Badge variant="outline">
@@ -132,7 +159,6 @@ const ProductPreview = ({
               </Badge>
             )}
           </div>
-
           {tags.length > 0 && (
             <div className="flex gap-1 flex-wrap">
               {tags.map((tag: string) => (
@@ -142,7 +168,6 @@ const ProductPreview = ({
               ))}
             </div>
           )}
-
           <div className="space-y-2">
             <h3 className="font-semibold">Description</h3>
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">
@@ -188,6 +213,13 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
 
+  // Cropper state
+  const [showCrop, setShowCrop] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+
   function isValidYouTubeUrl(url: string) {
     return /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}(&.*)?$/.test(
       url.trim()
@@ -209,28 +241,28 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
     setTags((prev) => prev.filter((tag) => tag !== tagToRemove));
   };
 
-  // Compress and upload thumbnail
+  // Show cropper when user selects a thumbnail
   const handleThumbnailUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
     if (file) {
-      try {
-        const compressedFile = await imageCompression(file, {
-          maxSizeMB: 1.5,
-          maxWidthOrHeight: 1920,
-          useWebWorker: true,
-          initialQuality: 0.1,
-        });
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setThumbnail(e.target?.result as string);
-        };
-        reader.readAsDataURL(compressedFile);
-      } catch (error) {
-        toast.error("Image compression failed");
-      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setCropImageSrc(e.target?.result as string);
+        setShowCrop(true);
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  // Save cropped image as thumbnail
+  const handleCropSave = async () => {
+    if (!cropImageSrc || !croppedAreaPixels) return;
+    const croppedImage = await getCroppedImg(cropImageSrc, croppedAreaPixels);
+    setThumbnail(croppedImage);
+    setShowCrop(false);
+    setCropImageSrc(null);
   };
 
   // Compress and upload additional images
@@ -312,6 +344,31 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
 
   return (
     <div className="w-full font-sans ">
+      {/* Cropper Modal */}
+      <Modal open={showCrop} onClose={() => setShowCrop(false)}>
+        <div className="w-full h-64 relative bg-black rounded">
+          {cropImageSrc && (
+            <Cropper
+              image={cropImageSrc}
+              crop={crop}
+              zoom={zoom}
+              aspect={16 / 9}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={(_, croppedAreaPixels) =>
+                setCroppedAreaPixels(croppedAreaPixels)
+              }
+            />
+          )}
+        </div>
+        <div className="flex justify-end gap-2 mt-4">
+          <Button variant="outline" onClick={() => setShowCrop(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleCropSave}>Crop & Save</Button>
+        </div>
+      </Modal>
+
       {/* Header */}
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex items-center gap-4">
@@ -492,14 +549,18 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                <p className="text-xs text-muted-foreground mb-2">
+                  <b>Note:</b> Only 16:9 ratio images are supported. You can
+                  crop your image after selecting.
+                </p>
                 <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
                   {thumbnail ? (
-                    <div className="relative inline-block">
+                    <div className="relative w-full aspect-video rounded-lg overflow-hidden">
                       <Image
                         src={thumbnail || "/placeholder.svg"}
                         alt="Thumbnail preview"
                         fill
-                        className="object-cover rounded-lg"
+                        className="object-cover"
                       />
                       <Button
                         variant="destructive"
