@@ -5,10 +5,11 @@ import { eq, and, desc, sql } from "drizzle-orm";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const developerId = params.id;
+    // Await the params since they're now async in Next.js 15
+    const { id: developerId } = await context.params;
 
     // Get developer details
     const [developer] = await db
