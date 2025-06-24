@@ -124,26 +124,6 @@ export default function DeveloperDetailPage() {
       {/* Header */}
       <Header />
 
-      {/* Breadcrumbs */}
-      <div className="border-b border-border/40 bg-muted/20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex items-center text-sm text-muted-foreground">
-            <span className="hover:text-foreground cursor-pointer">Home</span>
-            <span className="mx-2">/</span>
-            <a
-              href="/developers"
-              className="hover:text-foreground cursor-pointer"
-            >
-              Developers
-            </a>
-            <span className="mx-2">/</span>
-            <span className="text-foreground font-medium">
-              {developer.displayName}
-            </span>
-          </div>
-        </div>
-      </div>
-
       {/* User Card (no banner) */}
       <div className="relative w-full flex justify-center mt-8 mb-12">
         <div className="bg-background/95 rounded-2xl shadow-lg flex flex-col md:flex-row items-center gap-6 px-6 py-6 border border-border max-w-3xl w-full">
