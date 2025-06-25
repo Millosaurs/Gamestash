@@ -48,7 +48,19 @@ export default function DevelopersPage() {
         const response = await fetch("/api/developers");
         if (response.ok) {
           const data = await response.json();
-          setDevelopers(data);
+          // Map analytics fields to top-level for backward compatibility
+          setDevelopers(
+            data.map((dev: any) => ({
+              ...dev,
+              // fallback to analytics if present
+              totalProducts: dev.analytics?.totalProducts ?? dev.totalProducts,
+              totalViews: dev.analytics?.totalViews ?? dev.totalViews,
+              totalLikes: dev.analytics?.totalLikes ?? dev.totalLikes,
+              totalSales: dev.analytics?.totalSales ?? dev.totalSales,
+              totalRevenue: dev.analytics?.totalRevenue ?? dev.totalRevenue,
+              avgRating: dev.analytics?.avgRating ?? dev.rating,
+            }))
+          );
         }
       } catch (error) {
         console.error("Error fetching developers:", error);
@@ -59,25 +71,6 @@ export default function DevelopersPage() {
 
     fetchDevelopers();
   }, []);
-
-  useEffect(() => {
-    async function fetchAllDeveloperStats() {
-      const stats: Record<string, any> = {};
-      await Promise.all(
-        developers.map(async (dev) => {
-          try {
-            const res = await fetch(`/api/developers/${dev.id}/analytics`);
-            if (res.ok) {
-              const data = await res.json();
-              stats[dev.id] = data.totals;
-            }
-          } catch {}
-        })
-      );
-      setDeveloperStats(stats);
-    }
-    if (developers.length > 0) fetchAllDeveloperStats();
-  }, [developers]);
 
   // Get unique specialties for filter
   const allSpecialties = useMemo(() => {
@@ -217,7 +210,7 @@ export default function DevelopersPage() {
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Eye className="h-5 w-5 text-blue-400" />
                 <span className="text-2xl font-bold text-foreground">
-                  {Math.round(totalStats.totalViews / 1000)}k
+                  {totalStats.totalViews.toLocaleString()}
                 </span>
               </div>
               <div className="text-sm text-muted-foreground">Total Views</div>
@@ -478,17 +471,13 @@ export default function DevelopersPage() {
                       >
                         <div className="bg-muted/50 rounded-lg p-2 hover:bg-primary/10 transition-colors">
                           <div className="font-bold text-foreground text-sm">
-                            {developerStats[developer.id]?.totalProducts ??
-                              developer.totalProducts}
+                            {developer.totalProducts}
                           </div>
                           <div className="text-muted-foreground">Products</div>
                         </div>
                         <div className="bg-muted/50 rounded-lg p-2 hover:bg-primary/10 transition-colors">
                           <div className="font-bold text-foreground text-sm">
-                            {developerStats[
-                              developer.id
-                            ]?.totalViews?.toLocaleString() ??
-                              developer.totalViews?.toLocaleString()}
+                            {developer.totalViews?.toLocaleString()}
                           </div>
                           <div className="text-muted-foreground">Views</div>
                         </div>
@@ -496,17 +485,14 @@ export default function DevelopersPage() {
                           <div className="flex items-center justify-center gap-1">
                             <Heart className="h-3 w-3 text-red-400" />
                             <span className="font-bold text-foreground text-sm">
-                              {developerStats[
-                                developer.id
-                              ]?.totalLikes?.toLocaleString() ??
-                                developer.totalLikes?.toLocaleString()}
+                              {developer.totalLikes?.toLocaleString()}
                             </span>
                           </div>
                           <div className="text-muted-foreground">Likes</div>
                         </div>
                         <div className="bg-muted/50 rounded-lg p-2 hover:bg-primary/10 transition-colors">
                           <div className="font-bold text-foreground text-sm">
-                            {developerStats[developer.id]?.totalSales ?? 0}
+                            {developer.totalSales ?? 0}
                           </div>
                           <div className="text-muted-foreground">Sales</div>
                         </div>

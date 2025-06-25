@@ -35,6 +35,7 @@ export async function GET(request: Request) {
         totalProducts: user.totalProducts,
         totalLikes: user.totalLikes,
         totalViews: user.totalViews,
+        totalSales: user.totalSales,
         rating: user.rating,
         createdAt: user.createdAt,
       })
@@ -81,6 +82,29 @@ export async function GET(request: Request) {
           })
         );
 
+        // Fetch analytics for this developer
+        const [totals] = await db
+          .select({
+            totalProducts: sql`COUNT(*)`,
+            totalViews: sql`COALESCE(SUM(${products.views}), 0)`,
+            totalLikes: sql`COALESCE(SUM(${products.likes}), 0)`,
+            totalSales: sql`COALESCE(SUM(${products.sales}), 0)`,
+            totalRevenue: sql`COALESCE(SUM(${products.revenue}), 0)`,
+            avgRating: sql`COALESCE(ROUND(AVG(${products.rating}), 1), 0)`,
+          })
+          .from(products)
+          .where(eq(products.userId, developer.id));
+
+        const analytics = {
+          totalProducts: Number(totals.totalProducts),
+          totalViews: Number(totals.totalViews),
+          totalLikes: Number(totals.totalLikes),
+          totalSales: Number(totals.totalSales),
+          totalRevenue: Number(totals.totalRevenue),
+          avgRating:
+            totals.avgRating !== null ? Number(totals.avgRating) : null,
+        };
+
         return {
           ...developer,
           displayName: developer.displayName || developer.name,
@@ -93,6 +117,7 @@ export async function GET(request: Request) {
           },
           joinedDate: developer.createdAt,
           recentProducts: productsWithLikes,
+          analytics, // merged analytics here
         };
       })
     );
