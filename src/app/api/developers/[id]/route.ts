@@ -47,6 +47,28 @@ export async function GET(
       })
     );
 
+    // Fetch analytics in the same request
+    const [totals] = await db
+      .select({
+        totalProducts: sql`COUNT(*)`,
+        totalViews: sql`COALESCE(SUM(${products.views}), 0)`,
+        totalLikes: sql`COALESCE(SUM(${products.likes}), 0)`,
+        totalSales: sql`COALESCE(SUM(${products.sales}), 0)`,
+        totalRevenue: sql`COALESCE(SUM(${products.revenue}), 0)`,
+        avgRating: sql`COALESCE(ROUND(AVG(${products.rating}), 1), 0)`,
+      })
+      .from(products)
+      .where(eq(products.userId, developerId));
+
+    const analytics = {
+      totalProducts: Number(totals.totalProducts),
+      totalViews: Number(totals.totalViews),
+      totalLikes: Number(totals.totalLikes),
+      totalSales: Number(totals.totalSales),
+      totalRevenue: Number(totals.totalRevenue),
+      avgRating: totals.avgRating !== null ? Number(totals.avgRating) : null,
+    };
+
     const developerWithProducts = {
       ...developer,
       displayName: developer.displayName || developer.name,
@@ -59,6 +81,7 @@ export async function GET(
       },
       joinedDate: developer.createdAt,
       products: allProducts,
+      analytics, // merged analytics here
     };
 
     return NextResponse.json(developerWithProducts);

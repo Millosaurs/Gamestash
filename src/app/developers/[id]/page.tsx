@@ -61,6 +61,13 @@ export type Developer = {
   featured: boolean;
   socialLinks: SocialLinks;
   products: Product[];
+  analytics?: {
+    totalProducts?: number;
+    totalLikes?: number;
+    totalViews?: number;
+    totalSales?: number;
+    [key: string]: any;
+  };
 };
 
 // Cache for developer analytics (1 min TTL)
@@ -70,36 +77,22 @@ export default function DeveloperDetailPage() {
   const params = useParams();
   const [developer, setDeveloper] = useState<Developer | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
 
   useEffect(() => {
     const fetchDeveloper = async () => {
       setLoading(true);
-      const res = await fetch(`/api/developers/${params.id}`);
+      // Use keepalive and no-cache for faster response
+      const res = await fetch(`/api/developers/${params.id}`, {
+        cache: "no-store",
+        keepalive: true,
+      });
       const data = await res.json();
       setDeveloper(data);
       setLoading(false);
     };
     if (params.id) fetchDeveloper();
-  }, [params.id]);
-
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      if (!params.id) return;
-      const cacheKey = String(params.id);
-      const cached = analyticsCache.get(cacheKey);
-      if (cached) {
-        setAnalytics(cached);
-        return;
-      }
-      const res = await fetch(`/api/developers/${params.id}/analytics`);
-      const data = await res.json();
-      analyticsCache.set(cacheKey, data.totals);
-      setAnalytics(data.totals);
-    };
-    fetchAnalytics();
   }, [params.id]);
 
   if (loading) {
@@ -147,6 +140,9 @@ export default function DeveloperDetailPage() {
     );
   }
 
+  // Use analytics from developer object
+  const analytics = developer.analytics;
+
   const handleProductClick = (id: string) => {
     window.location.href = `/product/${id}`;
   };
@@ -154,11 +150,6 @@ export default function DeveloperDetailPage() {
   const handleHeartClick = (e: React.MouseEvent, productId: number) => {
     e.stopPropagation();
     // Implement like logic here
-  };
-
-  const handleFollow = () => {
-    setIsFollowing(!isFollowing);
-    // Implement follow logic here
   };
 
   const handleShare = () => {
@@ -276,26 +267,9 @@ export default function DeveloperDetailPage() {
                   </div>
                   {/* Action Buttons */}
                   <div className="flex flex-wrap gap-3">
-                    <Button
-                      onClick={handleFollow}
-                      variant={isFollowing ? "outline" : "default"}
-                      size="lg"
-                      className={`$${
-                        isFollowing
-                          ? "hover:bg-destructive hover:text-destructive-foreground"
-                          : ""
-                      } transition-all duration-200`}
-                    >
-                      <Users className="w-4 h-4 mr-2" />
-                      {isFollowing ? "Following" : "Follow"}
-                    </Button>
                     <Button onClick={handleShare} variant="outline" size="lg">
                       <Share2 className="w-4 h-4 mr-2" />
                       Share
-                    </Button>
-                    <Button variant="outline" size="lg">
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      Message
                     </Button>
                   </div>
                 </div>
@@ -479,15 +453,12 @@ export default function DeveloperDetailPage() {
 
         {/* Enhanced Content Tabs */}
         <Tabs defaultValue="products" className="mb-8">
-          <TabsList className="grid w-full grid-cols-3 h-12 p-1 bg-muted/50 rounded-xl shadow-sm">
+          <TabsList className="grid w-full grid-cols-2 h-12 p-1 bg-muted/50 rounded-xl shadow-sm">
             <TabsTrigger value="products" className="rounded-lg font-medium">
               Products ({developer.products.length})
             </TabsTrigger>
             <TabsTrigger value="about" className="rounded-lg font-medium">
               About
-            </TabsTrigger>
-            <TabsTrigger value="reviews" className="rounded-lg font-medium">
-              Reviews
             </TabsTrigger>
           </TabsList>
 
@@ -688,26 +659,6 @@ export default function DeveloperDetailPage() {
                   )}
                 </div>
               </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="reviews" className="mt-8">
-            <div className="text-center py-20 bg-gradient-to-br from-muted/30 to-muted/10 rounded-2xl border border-border/50">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <MessageCircle className="w-8 h-8 text-primary" />
-              </div>
-              <h2 className="text-2xl font-bold text-foreground mb-3 font-display">
-                Reviews Coming Soon
-              </h2>
-              <p className="text-muted-foreground max-w-lg mx-auto text-lg">
-                Customer reviews and testimonials will be available here. We're
-                working on building this feature to help you make better
-                decisions.
-              </p>
-              <Button variant="outline" className="mt-6">
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Be the First to Review
-              </Button>
             </div>
           </TabsContent>
         </Tabs>

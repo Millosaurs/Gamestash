@@ -204,12 +204,6 @@ function RatingStars({
           />
         ))}
       </div>
-      <span className="text-sm font-medium">{rating}</span>
-      {reviews && (
-        <span className="text-sm text-muted-foreground">
-          ({reviews} reviews)
-        </span>
-      )}
     </div>
   );
 }
@@ -301,7 +295,7 @@ function SellerCard({ product }: { product: any }) {
                 98% positive
               </div>
             </div>
-            <RatingStars rating={4.8} reviews={127} />
+            <RatingStars rating={4.8} reviews={0} />
           </div>
         </div>
         <Separator className="my-4" />

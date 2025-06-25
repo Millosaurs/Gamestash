@@ -1,57 +1,40 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { products } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
-export async function GET(contextOrParams: any) {
-  let userId: string | undefined;
-
-  // Await params if it's a Promise (Next.js 15 dynamic routes)
-  const params = contextOrParams?.params
-    ? await contextOrParams.params
-    : contextOrParams;
-
-  if (params?.id) {
-    userId = params.id;
-  }
-
+export async function GET(
+  request: Request,
+  context: { params: { id: string } }
+) {
+  const userId = context.params.id;
   try {
     if (!userId) {
       return NextResponse.json({ error: "Missing user id" }, { status: 400 });
     }
-
-    // Get all products for this user
-    const userProducts = await db
+    // Aggregate analytics in a single query for performance using sql helper
+    const [totals] = await db
       .select({
-        id: products.id,
-        views: products.views,
-        likes: products.likes,
-        sales: products.sales,
-        revenue: products.revenue,
+        totalProducts: sql`COUNT(*)`,
+        totalViews: sql`COALESCE(SUM(${products.views}), 0)`,
+        totalLikes: sql`COALESCE(SUM(${products.likes}), 0)`,
+        totalSales: sql`COALESCE(SUM(${products.sales}), 0)`,
+        totalRevenue: sql`COALESCE(SUM(${products.revenue}), 0)`,
+        avgRating: sql`COALESCE(ROUND(AVG(${products.rating}), 1), 0)`,
       })
       .from(products)
       .where(eq(products.userId, userId));
-
-    // Calculate totals
-    const totals = userProducts.reduce(
-      (acc, product) => ({
-        totalProducts: acc.totalProducts + 1,
-        totalViews: acc.totalViews + (product.views || 0),
-        totalLikes: acc.totalLikes + (product.likes || 0),
-        totalSales: acc.totalSales + (product.sales || 0),
-        totalRevenue:
-          acc.totalRevenue + parseFloat(String(product.revenue || "0")),
-      }),
-      {
-        totalProducts: 0,
-        totalViews: 0,
-        totalLikes: 0,
-        totalSales: 0,
-        totalRevenue: 0,
-      }
-    );
-
-    return NextResponse.json({ success: true, totals });
+    return NextResponse.json({
+      success: true,
+      totals: {
+        totalProducts: Number(totals.totalProducts),
+        totalViews: Number(totals.totalViews),
+        totalLikes: Number(totals.totalLikes),
+        totalSales: Number(totals.totalSales),
+        totalRevenue: Number(totals.totalRevenue),
+        avgRating: totals.avgRating !== null ? Number(totals.avgRating) : null,
+      },
+    });
   } catch (error) {
     console.error("Error fetching developer analytics:", error);
     return NextResponse.json(
