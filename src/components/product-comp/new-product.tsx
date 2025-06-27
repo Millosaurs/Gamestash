@@ -9,6 +9,7 @@ import {
   Eye,
   EyeOff,
   ImagePlus,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -547,7 +548,11 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
               !formData.price
             }
           >
-            {isLoading ? "Publishing..." : "Publish"}
+            {isLoading ? (
+              <Loader2 className="animate-spin w-4 h-4 " />
+            ) : (
+              "Publish"
+            )}
           </Button>
         </div>
       </div>
