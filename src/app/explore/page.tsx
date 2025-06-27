@@ -512,13 +512,13 @@ export default function ExplorePage() {
         <div className="relative mx-auto max-w-4xl px-4 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary font-medium text-sm mb-6">
             <Sparkles className="h-4 w-4" />
-            Discover Epic Setups
+            Discover Epic projects
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 font-display bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-            Explore Gaming Setups
+            Explore Gaming projects
           </h1>
           <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-            Find, filter, and get inspired by the best gaming setups from our
+            Find, filter, and get inspired by the best gaming projects from our
             creative community. Use the filters to discover your perfect match.
           </p>
           {/* Stats Cards */}
@@ -530,7 +530,7 @@ export default function ExplorePage() {
                   {totalProducts}
                 </span>
               </div>
-              <div className="text-sm text-muted-foreground">Setups</div>
+              <div className="text-sm text-muted-foreground">projects</div>
             </div>
             <div className="bg-background/60 backdrop-blur-sm rounded-2xl p-4 border border-border/50 hover:bg-background/80 transition-all duration-300">
               <div className="flex items-center justify-center gap-2 mb-2">
@@ -574,7 +574,7 @@ export default function ExplorePage() {
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search setups..."
+                  placeholder="Search projects..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 bg-background/50 backdrop-blur-sm border-border/50 focus:bg-background"
@@ -667,7 +667,7 @@ export default function ExplorePage() {
           {/* Results count */}
           <div className="mt-4 text-sm text-muted-foreground">
             Showing {sortedAndFilteredProducts.length} of {products.length}{" "}
-            setups
+            projects
           </div>
         </div>
       </section>
@@ -755,7 +755,7 @@ export default function ExplorePage() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
-                      placeholder="Search setups..."
+                      placeholder="Search projects..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-10"

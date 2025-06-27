@@ -297,11 +297,14 @@ export function EditProductForm({
   ) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Show cropper immediately with original file
       const reader = new FileReader();
       reader.onload = (e) => {
         setCropImageSrc(e.target?.result as string);
         setShowCrop(true);
         setIsCroppingThumbnail(true);
+        // Store the original file for later use
+        (window as any)._originalCropFile = file;
       };
       reader.readAsDataURL(file);
     }
@@ -320,15 +323,18 @@ export function EditProductForm({
     const filesToProcess = files.slice(0, availableSlots);
 
     if (filesToProcess.length > 0) {
-      const file = filesToProcess[0];
+      // Show cropper for the first image immediately
       const reader = new FileReader();
       reader.onload = (e) => {
+        setIsCroppingThumbnail(false);
         setCropImageSrc(e.target?.result as string);
         setShowCrop(true);
-        setIsCroppingThumbnail(false);
+        // Store the files for later use
+        (window as any)._pendingCropFiles = filesToProcess;
+        (window as any)._pendingCropIndex = 0;
         setPendingAdditionalIndex(images.length); // add at the end
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(filesToProcess[0]);
     }
     // Reset input value so the same file can be selected again if needed
     if (additionalImagesInputRef.current) {
@@ -339,30 +345,51 @@ export function EditProductForm({
   // Save cropped image as thumbnail or additional image
   const handleCropSave = async () => {
     if (!cropImageSrc || !croppedAreaPixels) return;
-    const croppedImage = await getCroppedImg(cropImageSrc, croppedAreaPixels);
-
-    // Convert base64 to Blob
-    const base64ToBlob = (base64: string) => {
-      const arr = base64.split(",");
-      const mimeMatch = arr[0].match(/:(.*?);/);
-      const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
-      const bstr = atob(arr[1]);
-      let n = bstr.length;
-      const u8arr = new Uint8Array(n);
-      while (n--) {
-        u8arr[n] = bstr.charCodeAt(n);
+    // Use the original file for cropping
+    let fileToCrop: File | null = null;
+    if (isCroppingThumbnail) {
+      fileToCrop = (window as any)._originalCropFile || null;
+    } else {
+      const files = (window as any)._pendingCropFiles || [];
+      const idx = (window as any)._pendingCropIndex || 0;
+      fileToCrop = files[idx] || null;
+    }
+    if (!fileToCrop) {
+      toast.error("No file to crop");
+      setShowCrop(false);
+      setCropImageSrc(null);
+      return;
+    }
+    // Convert file to data URL before cropping
+    const fileToCropDataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      if (fileToCrop) {
+        reader.readAsDataURL(fileToCrop);
+      } else {
+        reject(new Error("No file to crop"));
       }
-      return new Blob([u8arr], { type: mime });
-    };
-    // Convert Blob to File
-    const blobToFile = (blob: Blob, fileName: string) => {
-      return new File([blob], fileName, { type: blob.type });
-    };
-    const croppedBlob = base64ToBlob(croppedImage);
-    const croppedFile = blobToFile(
-      croppedBlob,
-      `cropped-image-${Date.now()}.jpg`
+    });
+    // Crop the image
+    const croppedImageDataUrl = await getCroppedImg(
+      fileToCropDataUrl,
+      croppedAreaPixels
+    ); // getCroppedImg returns a data URL string
+    // Convert data URL to Blob for compression
+    const croppedImageBlob = await (await fetch(croppedImageDataUrl)).blob();
+    // Convert Blob to File for imageCompression
+    const croppedImageFile = new File(
+      [croppedImageBlob],
+      fileToCrop?.name || "cropped-image.jpg",
+      { type: croppedImageBlob.type, lastModified: Date.now() }
     );
+    // Compress the cropped image
+    const compressedFile = await imageCompression(croppedImageFile, {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    });
     // Upload to Cloudinary
     const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
     if (!uploadPreset) {
@@ -373,7 +400,10 @@ export function EditProductForm({
     }
     let cloudinaryUrl = null;
     try {
-      const uploadResult = await uploadToCloudinary(croppedFile, uploadPreset);
+      const uploadResult = await uploadToCloudinary(
+        compressedFile,
+        uploadPreset
+      );
       cloudinaryUrl = uploadResult.secure_url;
     } catch (e) {
       toast.error("Cloudinary upload failed");
@@ -383,9 +413,27 @@ export function EditProductForm({
     }
     if (isCroppingThumbnail) {
       setThumbnail(cloudinaryUrl);
+      (window as any)._originalCropFile = null;
     } else if (pendingAdditionalIndex !== null) {
       setImages((prev) => [...prev, cloudinaryUrl]);
       setPendingAdditionalIndex(null);
+      // Move to next file if any
+      (window as any)._pendingCropIndex =
+        ((window as any)._pendingCropIndex || 0) + 1;
+      const nextFile = ((window as any)._pendingCropFiles || [])[
+        (window as any)._pendingCropIndex
+      ];
+      if (nextFile) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setCropImageSrc(e.target?.result as string);
+          setShowCrop(true);
+        };
+        reader.readAsDataURL(nextFile);
+      } else {
+        (window as any)._pendingCropFiles = null;
+        (window as any)._pendingCropIndex = 0;
+      }
     }
     setShowCrop(false);
     setCropImageSrc(null);
