@@ -26,7 +26,10 @@ export default function AdminSettingsPage() {
       const res = await fetch("/api/admin/add-admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: newAdminUsername, password: newAdminPassword }),
+        body: JSON.stringify({
+          username: newAdminUsername,
+          password: newAdminPassword,
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -73,20 +76,22 @@ export default function AdminSettingsPage() {
             <Input
               placeholder="Username"
               value={newAdminUsername}
-              onChange={e => setNewAdminUsername(e.target.value)}
+              onChange={(e) => setNewAdminUsername(e.target.value)}
               required
             />
             <Input
               type="password"
               placeholder="Password"
               value={newAdminPassword}
-              onChange={e => setNewAdminPassword(e.target.value)}
+              onChange={(e) => setNewAdminPassword(e.target.value)}
               required
             />
             <Button type="submit" disabled={addAdminLoading}>
               {addAdminLoading ? "Adding..." : "Add Admin"}
             </Button>
-            {addAdminMessage && <div className="text-green-600">{addAdminMessage}</div>}
+            {addAdminMessage && (
+              <div className="text-green-600">{addAdminMessage}</div>
+            )}
           </form>
         </CardContent>
       </Card>
@@ -100,20 +105,22 @@ export default function AdminSettingsPage() {
               type="password"
               placeholder="Current Password"
               value={currentPassword}
-              onChange={e => setCurrentPassword(e.target.value)}
+              onChange={(e) => setCurrentPassword(e.target.value)}
               required
             />
             <Input
               type="password"
               placeholder="New Password"
               value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
+              onChange={(e) => setNewPassword(e.target.value)}
               required
             />
             <Button type="submit" disabled={changeLoading}>
               {changeLoading ? "Changing..." : "Change Password"}
             </Button>
-            {changeMessage && <div className="text-green-600">{changeMessage}</div>}
+            {changeMessage && (
+              <div className="text-green-600">{changeMessage}</div>
+            )}
           </form>
         </CardContent>
       </Card>

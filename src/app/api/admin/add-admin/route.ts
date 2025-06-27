@@ -6,9 +6,7 @@ import { eq } from "drizzle-orm";
 import { hash } from "@node-rs/argon2";
 
 function generateId() {
-  return (
-    Date.now().toString(36) + Math.random().toString(36).substring(2, 10)
-  );
+  return Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
 }
 
 export async function POST(request: NextRequest) {
@@ -19,7 +17,10 @@ export async function POST(request: NextRequest) {
     }
     const { username, password } = await request.json();
     if (!username || !password) {
-      return NextResponse.json({ error: "Missing username or password" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing username or password" },
+        { status: 400 }
+      );
     }
     // Create a new user for the admin
     const newUserId = generateId();
@@ -45,6 +46,9 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

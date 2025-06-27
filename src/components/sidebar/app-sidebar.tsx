@@ -150,7 +150,10 @@ export function AppSidebar({
   adminLinks = false,
   secondaryNav = [],
   ...props
-}: React.ComponentProps<typeof Sidebar> & { adminLinks?: boolean; secondaryNav?: any[] }) {
+}: React.ComponentProps<typeof Sidebar> & {
+  adminLinks?: boolean;
+  secondaryNav?: any[];
+}) {
   const { data: session } = useSession();
 
   // Admin navigation
@@ -208,7 +211,9 @@ export function AppSidebar({
         {adminLinks ? (
           <>
             <NavMain items={adminNav} />
-            {secondaryNav.length > 0 && <NavSecondary items={secondaryNav} className="mt-4" />}
+            {secondaryNav.length > 0 && (
+              <NavSecondary items={secondaryNav} className="mt-4" />
+            )}
           </>
         ) : (
           <>

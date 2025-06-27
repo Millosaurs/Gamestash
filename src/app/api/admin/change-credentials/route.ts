@@ -25,7 +25,10 @@ export async function POST(request: NextRequest) {
     }
     const valid = await verify(creds[0].passwordHash, currentPassword);
     if (!valid) {
-      return NextResponse.json({ error: "Invalid current password" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Invalid current password" },
+        { status: 403 }
+      );
     }
     const newHash = await hash(newPassword, {
       memoryCost: 19456,
@@ -39,6 +42,9 @@ export async function POST(request: NextRequest) {
       .where(eq(adminCredentials.userId, session.adminId));
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
