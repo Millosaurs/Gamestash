@@ -7,6 +7,11 @@ const protectedPaths = ["/dashboard", "/accounts"];
 export async function middleware(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl;
+    // Allow access to /admin/login always
+    if (pathname.startsWith("/admin/login")) {
+      return NextResponse.next();
+    }
+
     if (protectedPaths.some((path) => pathname.startsWith(path))) {
       // Only check for the session cookie, do not fetch session in middleware
       const sessionCookie = getSessionCookie(request);

@@ -56,6 +56,10 @@ export const user = pgTable(
     emailNotifications: boolean().default(true),
     pushNotifications: boolean().default(false),
     marketingEmails: boolean().default(false),
+
+    // Role and ban status
+    role: text().notNull().default("user"), // 'user', 'admin', 'developer'
+    banned: boolean().notNull().default(false),
   },
   (table) => [unique("user_email_key").on(table.email)]
 );
@@ -141,6 +145,11 @@ export const products = pgTable("products", {
   videoUrl: text("video_url"), // Optional video URL for product showcase
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+
+  // Approval fields
+  approved: boolean("approved").notNull().default(false),
+  rejected: boolean("rejected").notNull().default(false),
+  adminComment: text("admin_comment"),
 });
 
 // For view tracking
@@ -198,6 +207,9 @@ export const productSales = pgTable(
     amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
     status: text("status").notNull().default("completed"), // 'pending', 'completed', 'refunded'
     createdAt: timestamp("created_at").defaultNow(),
+
+    // Refund status
+    refunded: boolean("refunded").notNull().default(false),
   },
   (table) => [
     index("product_sales_product_id_idx").on(table.productId),
@@ -226,3 +238,37 @@ export const dailyAnalytics = pgTable(
     index("daily_analytics_date_idx").on(table.date),
   ]
 );
+
+export const productApprovals = pgTable("product_approvals", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  productId: uuid("product_id")
+    .references(() => products.id)
+    .notNull(),
+  adminId: text("admin_id")
+    .references(() => user.id)
+    .notNull(),
+  status: text("status").notNull(), // 'approved', 'rejected'
+  comment: text("comment"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const adminCredentials = pgTable("admin_credentials", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  username: text("username").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  userId: text("user_id")
+    .references(() => user.id)
+    .notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const adminSessions = pgTable("admin_sessions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  adminId: text("admin_id")
+    .references(() => user.id)
+    .notNull(),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});

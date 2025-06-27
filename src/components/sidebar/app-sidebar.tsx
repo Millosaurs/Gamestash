@@ -145,8 +145,35 @@ const data = {
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  adminLinks = false,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & { adminLinks?: boolean }) {
   const { data: session } = useSession();
+
+  // Admin navigation
+  const adminNav = [
+    {
+      title: "Users",
+      url: "/admin/users",
+      icon: Frame,
+    },
+    {
+      title: "Products",
+      url: "/admin/products",
+      icon: Command,
+    },
+    {
+      title: "Approval",
+      url: "/admin/approval",
+      icon: Map,
+    },
+    {
+      title: "Statistics",
+      url: "/admin/statistics",
+      icon: PieChart,
+    },
+  ];
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -170,8 +197,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-
+        {adminLinks ? (
+          <NavMain items={adminNav} />
+        ) : (
+          <NavMain items={data.navMain} />
+        )}
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

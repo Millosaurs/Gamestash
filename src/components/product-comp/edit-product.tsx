@@ -21,6 +21,7 @@ import {
   updateProduct,
   UpdateProductData,
 } from "@/lib/actions/products";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 import imageCompression from "browser-image-compression";
 import Image from "next/image";
 import Cropper from "react-easy-crop";
@@ -340,10 +341,50 @@ export function EditProductForm({
     if (!cropImageSrc || !croppedAreaPixels) return;
     const croppedImage = await getCroppedImg(cropImageSrc, croppedAreaPixels);
 
+    // Convert base64 to Blob
+    const base64ToBlob = (base64: string) => {
+      const arr = base64.split(",");
+      const mimeMatch = arr[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new Blob([u8arr], { type: mime });
+    };
+    // Convert Blob to File
+    const blobToFile = (blob: Blob, fileName: string) => {
+      return new File([blob], fileName, { type: blob.type });
+    };
+    const croppedBlob = base64ToBlob(croppedImage);
+    const croppedFile = blobToFile(
+      croppedBlob,
+      `cropped-image-${Date.now()}.jpg`
+    );
+    // Upload to Cloudinary
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+    if (!uploadPreset) {
+      toast.error("Cloudinary upload preset is not configured.");
+      setShowCrop(false);
+      setCropImageSrc(null);
+      return;
+    }
+    let cloudinaryUrl = null;
+    try {
+      const uploadResult = await uploadToCloudinary(croppedFile, uploadPreset);
+      cloudinaryUrl = uploadResult.secure_url;
+    } catch (e) {
+      toast.error("Cloudinary upload failed");
+      setShowCrop(false);
+      setCropImageSrc(null);
+      return;
+    }
     if (isCroppingThumbnail) {
-      setThumbnail(croppedImage);
+      setThumbnail(cloudinaryUrl);
     } else if (pendingAdditionalIndex !== null) {
-      setImages((prev) => [...prev, croppedImage]);
+      setImages((prev) => [...prev, cloudinaryUrl]);
       setPendingAdditionalIndex(null);
     }
     setShowCrop(false);

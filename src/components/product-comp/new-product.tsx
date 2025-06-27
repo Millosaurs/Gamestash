@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createProduct, CreateProductData } from "@/lib/actions/products";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
 import Image from "next/image";
@@ -223,6 +224,8 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
   const [pendingAdditionalImages, setPendingAdditionalImages] = useState<
     string[]
   >([]);
+  const [compressionProgress, setCompressionProgress] = useState<number>(0);
+  const [isCompressing, setIsCompressing] = useState<boolean>(false);
 
   function isValidYouTubeUrl(url: string) {
     return /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}(&.*)?$/.test(
@@ -251,13 +254,20 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
   ) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Compress the image before cropping
+      const compressedFile = await imageCompression(file, {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+        initialQuality: 0.1,
+      });
       const reader = new FileReader();
       reader.onload = (e) => {
         setCropImageSrc(e.target?.result as string);
         setShowCrop(true);
         setIsCroppingThumbnail(true);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
     }
   };
 
@@ -270,8 +280,18 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
     const filesToProcess = files.slice(0, availableSlots);
 
     if (filesToProcess.length > 0) {
-      // Read all files as data URLs
-      const fileReaders = filesToProcess.map(
+      // Compress all files before cropping
+      const compressedFiles = await Promise.all(
+        filesToProcess.map((file) =>
+          imageCompression(file, {
+            maxSizeMB: 1,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+          })
+        )
+      );
+      // Read all compressed files as data URLs
+      const fileReaders = compressedFiles.map(
         (file) =>
           new Promise<string>((resolve) => {
             const reader = new FileReader();
@@ -290,14 +310,69 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
   // Save cropped image as thumbnail or additional image
   const handleCropSave = async () => {
     if (!cropImageSrc || !croppedAreaPixels) return;
+    setIsCompressing(true);
+    setCompressionProgress(0);
     const croppedImage = await getCroppedImg(cropImageSrc, croppedAreaPixels);
 
+    // Convert base64 to Blob for compression
+    const base64ToBlob = (base64: string) => {
+      const arr = base64.split(",");
+      const mimeMatch = arr[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new Blob([u8arr], { type: mime });
+    };
+
+    // Convert Blob to File for imageCompression
+    const blobToFile = (blob: Blob, fileName: string) => {
+      return new File([blob], fileName, { type: blob.type });
+    };
+
+    const croppedBlob = base64ToBlob(croppedImage);
+    const croppedFile = blobToFile(
+      croppedBlob,
+      `cropped-image-${Date.now()}.jpg`
+    );
+    const compressedFile = await imageCompression(croppedFile, {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+      onProgress: (progress) => setCompressionProgress(progress),
+    });
+
+    // Upload to Cloudinary
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+    if (!uploadPreset) {
+      toast.error("Cloudinary upload preset is not configured.");
+      setIsCompressing(false);
+      setCompressionProgress(0);
+      return;
+    }
+    let cloudinaryUrl = null;
+    try {
+      const uploadResult = await uploadToCloudinary(
+        compressedFile,
+        uploadPreset
+      );
+      cloudinaryUrl = uploadResult.secure_url;
+    } catch (e) {
+      toast.error("Cloudinary upload failed");
+      setIsCompressing(false);
+      setCompressionProgress(0);
+      return;
+    }
+
     if (isCroppingThumbnail) {
-      setThumbnail(croppedImage);
+      setThumbnail(cloudinaryUrl);
       setShowCrop(false);
       setCropImageSrc(null);
     } else {
-      setImages((prev) => [...prev, croppedImage]);
+      setImages((prev) => [...prev, cloudinaryUrl]);
       setPendingAdditionalImages((prev) => {
         const next = prev.slice(1);
         if (next.length > 0) {
@@ -310,6 +385,8 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
         return next;
       });
     }
+    setIsCompressing(false);
+    setCompressionProgress(0);
   };
 
   const handleRemoveImage = (index: number) => {
@@ -384,12 +461,33 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
               }
             />
           )}
+          {isCompressing && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-10">
+              <div className="w-2/3">
+                <div className="h-2 bg-gray-300 rounded-full overflow-hidden">
+                  <div
+                    className="h-2 bg-primary transition-all"
+                    style={{ width: `${compressionProgress}%` }}
+                  />
+                </div>
+                <p className="text-xs text-white mt-2 text-center">
+                  Compressing image... {Math.round(compressionProgress)}%
+                </p>
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex justify-end gap-2 mt-4">
-          <Button variant="outline" onClick={() => setShowCrop(false)}>
+          <Button
+            variant="outline"
+            onClick={() => setShowCrop(false)}
+            disabled={isCompressing}
+          >
             Cancel
           </Button>
-          <Button onClick={handleCropSave}>Crop & Save</Button>
+          <Button onClick={handleCropSave} disabled={isCompressing}>
+            Crop & Save
+          </Button>
         </div>
       </Modal>
 
