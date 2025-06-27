@@ -28,7 +28,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-import { useSession } from "@/lib/auth-client";
+import { useSession, signOut } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
 
 export type NavUserProps = {
   user: {
@@ -175,6 +176,12 @@ export function AppSidebar({
     },
   ];
 
+  // Logout handler for admin
+  const handleAdminLogout = async () => {
+    await fetch("/api/admin/logout", { method: "POST" });
+    window.location.href = "/";
+  };
+
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -200,13 +207,29 @@ export function AppSidebar({
         {adminLinks ? (
           <NavMain items={adminNav} />
         ) : (
-          <NavMain items={data.navMain} />
+          <>
+            <NavMain items={data.navMain} />
+            <NavSecondary items={data.navSecondary} className="mt-auto" />
+          </>
         )}
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
-      <SidebarFooter>
-        {session?.user && <NavUser user={session.user} />}
-      </SidebarFooter>
+      {adminLinks ? (
+        <SidebarFooter>
+          <Button
+            variant="outline"
+            onClick={handleAdminLogout}
+            className="w-full"
+          >
+            Logout
+          </Button>
+        </SidebarFooter>
+      ) : (
+        <>
+          <SidebarFooter>
+            {session?.user && <NavUser user={session.user} />}
+          </SidebarFooter>
+        </>
+      )}
     </Sidebar>
   );
 }
