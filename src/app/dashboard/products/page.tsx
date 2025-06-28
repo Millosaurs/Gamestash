@@ -65,6 +65,14 @@ type ViewMode = "table" | "grid";
 type SortField = "title" | "price" | "status" | "createdAt" | "views" | "sales";
 type SortOrder = "asc" | "desc";
 
+function parseProductDates(product: any): Product {
+  return {
+    ...product,
+    createdAt: product.createdAt ? new Date(product.createdAt) : null,
+    updatedAt: product.updatedAt ? new Date(product.updatedAt) : null,
+  };
+}
+
 export default function ProductsPage() {
   const { data: session, isPending } = useSession();
   const [products, setProducts] = useState<Product[]>([]);
@@ -86,7 +94,7 @@ export default function ProductsPage() {
       try {
         const result = await getUserProducts();
         if (result.success) {
-          setProducts(result.data || []);
+          setProducts((result.data || []).map(parseProductDates));
         } else {
           toast.error(result.error || "Failed to fetch products");
         }
@@ -168,7 +176,7 @@ export default function ProductsPage() {
   const refreshProducts = async () => {
     const result = await getUserProducts();
     if (result.success) {
-      setProducts(result.data || []);
+      setProducts((result.data || []).map(parseProductDates));
     }
   };
 
