@@ -17,7 +17,8 @@ const lexend = Lexend({
 
 export const metadata: Metadata = {
   title: "Gamestash",
-  description: "made by millo with ❤️",
+  description:
+    "Level Up Your Gaming Experience. Discover, buy, and get inspired by premium, hand-picked gaming setups from the world's best creators.",
 };
 
 export default function RootLayout({
