@@ -16,7 +16,7 @@ export async function middleware(request: NextRequest) {
       // Only check for the session cookie, do not fetch session in middleware
       const sessionCookie = getSessionCookie(request);
       if (!sessionCookie) {
-        const loginUrl = new URL("/login", request.url);
+        const loginUrl = new URL("/auth", request.url);
         loginUrl.searchParams.set("redirect", pathname);
         return NextResponse.redirect(loginUrl);
       }
