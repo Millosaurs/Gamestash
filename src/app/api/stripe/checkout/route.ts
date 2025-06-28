@@ -12,14 +12,16 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 export async function POST(req: NextRequest) {
+  // 1. Authenticate user
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // 2. Parse request
   const { productId } = await req.json();
 
-  // Fetch product and seller info
+  // 3. Fetch product and seller info
   const [product] = await db
     .select()
     .from(products)
@@ -41,11 +43,47 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Calculate amounts (in cents)
+  // 4. Fetch seller's Stripe account to get country
+  let account: Stripe.Account;
+  try {
+    account = await stripe.accounts.retrieve(seller.stripeAccountId);
+  } catch (err: any) {
+    console.error("Stripe account retrieve error:", err);
+    return NextResponse.json(
+      {
+        error: "Failed to retrieve seller Stripe account",
+        details: err?.message || "No error message",
+        stripeError: err,
+      },
+      { status: 500 }
+    );
+  }
+
+  // 5. Calculate amounts (in cents)
   const amount = Math.round(Number(product.price) * 100); // e.g. $10.00 -> 1000
   const platformFee = Math.round(amount * 0.25); // 25% fee
 
-  // Create Stripe Checkout Session
+  // 6. Build payment_intent_data
+  const paymentIntentData: Stripe.Checkout.SessionCreateParams.PaymentIntentData =
+    {
+      application_fee_amount: platformFee,
+      transfer_data: {
+        destination: seller.stripeAccountId,
+      },
+      on_behalf_of: seller.stripeAccountId, // Always set this!
+      metadata: {
+        productId: product.id,
+        buyerId: session.user.id,
+        sellerId: seller.id,
+      },
+    };
+
+  // Add on_behalf_of for non-US sellers
+  if (account.country !== "US") {
+    paymentIntentData.on_behalf_of = seller.stripeAccountId;
+  }
+
+  // 7. Create Stripe Checkout Session
   try {
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -64,20 +102,10 @@ export async function POST(req: NextRequest) {
         },
       ],
       mode: "payment",
-      payment_intent_data: {
-        application_fee_amount: platformFee,
-        transfer_data: {
-          destination: seller.stripeAccountId,
-        },
-        metadata: {
-          productId: product.id,
-          buyerId: session.user.id,
-          sellerId: seller.id,
-        },
-      },
+      payment_intent_data: paymentIntentData,
       customer_email: session.user.email,
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/cancel`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/cancel`,
       metadata: {
         productId: product.id,
         buyerId: session.user.id,
@@ -89,7 +117,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("Stripe Checkout error:", error);
     return NextResponse.json(
-      { error: "Failed to create checkout session" },
+      { error: "Failed to create checkout session", details: error?.message },
       { status: 500 }
     );
   }
