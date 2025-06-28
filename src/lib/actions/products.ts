@@ -126,7 +126,7 @@ export async function updateProduct(data: UpdateProductData) {
         thumbnail: data.thumbnail,
         images: data.images,
         videoUrl: data.video_url,
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
       })
       .where(eq(products.id, data.id))
       .returning();
@@ -612,7 +612,7 @@ export async function getProductAnalytics(
       .where(
         and(
           eq(dailyAnalytics.productId, productId),
-          gte(dailyAnalytics.date, startDate)
+          gte(dailyAnalytics.date, startDate.toISOString())
         )
       )
       .orderBy(dailyAnalytics.date);
@@ -719,7 +719,7 @@ export async function getUserDashboardAnalytics(days: number = 30) {
       .where(
         and(
           eq(products.userId, session.user.id),
-          gte(dailyAnalytics.date, startDate)
+          gte(dailyAnalytics.date, startDate.toISOString())
         )
       )
       .groupBy(dailyAnalytics.date)
@@ -806,8 +806,8 @@ export async function aggregateDailyStats(targetDate?: string) {
       .where(
         and(
           eq(productViews.productId, product.id),
-          gte(productViews.createdAt, startOfDay),
-          lte(productViews.createdAt, endOfDay)
+          gte(productViews.createdAt, startOfDay.toISOString()),
+          lte(productViews.createdAt, endOfDay.toISOString())
         )
       );
 
@@ -818,8 +818,8 @@ export async function aggregateDailyStats(targetDate?: string) {
       .where(
         and(
           eq(productLikes.productId, product.id),
-          gte(productLikes.createdAt, startOfDay),
-          lte(productLikes.createdAt, endOfDay)
+          gte(productLikes.createdAt, startOfDay.toISOString()),
+          lte(productLikes.createdAt, endOfDay.toISOString())
         )
       );
 
@@ -833,8 +833,8 @@ export async function aggregateDailyStats(targetDate?: string) {
       .where(
         and(
           eq(productSales.productId, product.id),
-          gte(productSales.createdAt, startOfDay),
-          lte(productSales.createdAt, endOfDay)
+          gte(productSales.createdAt, startOfDay.toISOString()),
+          lte(productSales.createdAt, endOfDay.toISOString())
         )
       );
 
@@ -842,7 +842,7 @@ export async function aggregateDailyStats(targetDate?: string) {
     await db
       .insert(dailyAnalytics)
       .values({
-        date: startOfDay,
+        date: startOfDay.toISOString(),
         productId: product.id,
         views: viewsCount[0].count,
         likes: likesCount[0].count,
