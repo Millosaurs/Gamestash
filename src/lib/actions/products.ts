@@ -377,6 +377,8 @@ export async function getLatestProducts(limit: number = 6) {
 // Get single product by ID
 export async function getProductById(productId: string) {
   try {
+    const session = await getCachedSession();
+
     const product = await db
       .select({
         id: products.id,
@@ -410,13 +412,31 @@ export async function getProductById(productId: string) {
       return { success: false, error: "Product not found" };
     }
 
+    // Check if the current user has purchased this product
+    let hasPurchased = false;
+    if (session?.user) {
+      const sale = await db
+        .select()
+        .from(productSales)
+        .where(
+          and(
+            eq(productSales.productId, productId),
+            eq(productSales.buyerId, session.user.id),
+            eq(productSales.status, "completed")
+          )
+        )
+        .limit(1);
+
+      hasPurchased = sale.length > 0;
+    }
+
     // Increment view count
     await db
       .update(products)
       .set({ views: sql`${products.views} + 1` })
       .where(eq(products.id, productId));
 
-    return { success: true, data: product[0] };
+    return { success: true, data: { ...product[0], hasPurchased } };
   } catch (error) {
     console.error("Error fetching product:", error);
     return { success: false, error: "Failed to fetch product" };

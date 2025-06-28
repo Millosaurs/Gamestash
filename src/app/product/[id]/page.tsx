@@ -33,6 +33,7 @@ import {
   MapPin,
   Users,
   Star as StarIcon,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -318,7 +319,6 @@ export default function ProductPage() {
   const params = useParams();
   const productId = params.id as string;
   const { data: session } = useSession();
-
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
@@ -377,12 +377,34 @@ export default function ProductPage() {
     }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (!session?.user) {
       toast.error("Please login to purchase");
       return;
     }
-    window.location.href = `/checkout/${productId}`;
+
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id }),
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        window.location.href = data.url; // Redirect to Stripe Checkout
+      } else {
+        toast.error(data.error || "Failed to start checkout");
+      }
+    } catch (error) {
+      toast.error("Failed to start checkout");
+    }
+  };
+
+  const handleGetNow = () => {
+    // Redirect to download page or show download modal
+    window.location.href = `/products/${product.id}/download`;
   };
 
   const handleShare = async () => {
@@ -553,12 +575,26 @@ export default function ProductPage() {
               {/* Action Buttons */}
               <div className="space-y-4">
                 <Button
-                  onClick={handleBuyNow}
+                  onClick={product.hasPurchased ? handleGetNow : handleBuyNow}
                   size="lg"
-                  className="w-full text-lg py-6 font-semibold shadow-md bg-green-600 hover:bg-green-700 text-white"
+                  className={cn(
+                    "w-full text-lg py-6 font-semibold shadow-md",
+                    product.hasPurchased
+                      ? "bg-blue-600 hover:bg-blue-700 text-white"
+                      : "bg-green-600 hover:bg-green-700 text-white"
+                  )}
                 >
-                  <Zap className="w-5 h-5 mr-2" />
-                  Buy Now
+                  {product.hasPurchased ? (
+                    <>
+                      <Download className="w-5 h-5 mr-2" />
+                      Get Now
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-5 h-5 mr-2" />
+                      Buy Now
+                    </>
+                  )}
                 </Button>
 
                 <TrustBadges />

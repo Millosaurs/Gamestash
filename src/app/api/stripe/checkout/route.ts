@@ -8,7 +8,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-05-28.basil",
+  apiVersion: "2025-05-28.basil", // Use a stable version
 });
 
 export async function POST(req: NextRequest) {
@@ -45,16 +45,52 @@ export async function POST(req: NextRequest) {
   const amount = Math.round(Number(product.price) * 100); // e.g. $10.00 -> 1000
   const platformFee = Math.round(amount * 0.25); // 25% fee
 
-  // Create PaymentIntent
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount,
-    currency: "usd", // or your currency
-    application_fee_amount: platformFee,
-    transfer_data: {
-      destination: seller.stripeAccountId,
-    },
-    // Optionally, add metadata, description, etc.
-  });
+  // Create Stripe Checkout Session
+  try {
+    const checkoutSession = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: product.title,
+              description: product.description,
+              images: product.thumbnail ? [product.thumbnail] : [],
+            },
+            unit_amount: amount,
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      payment_intent_data: {
+        application_fee_amount: platformFee,
+        transfer_data: {
+          destination: seller.stripeAccountId,
+        },
+        metadata: {
+          productId: product.id,
+          buyerId: session.user.id,
+          sellerId: seller.id,
+        },
+      },
+      customer_email: session.user.email,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/cancel`,
+      metadata: {
+        productId: product.id,
+        buyerId: session.user.id,
+        sellerId: seller.id,
+      },
+    });
 
-  return NextResponse.json({ clientSecret: paymentIntent.client_secret });
+    return NextResponse.json({ url: checkoutSession.url });
+  } catch (error: any) {
+    console.error("Stripe Checkout error:", error);
+    return NextResponse.json(
+      { error: "Failed to create checkout session" },
+      { status: 500 }
+    );
+  }
 }
