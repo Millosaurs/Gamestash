@@ -17,6 +17,13 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SiteHeader } from "@/components/sidebar/site-header";
 import { useSession } from "@/lib/auth-client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 export default function ConnectPage() {
@@ -24,25 +31,27 @@ export default function ConnectPage() {
   const [stripeAccount, setStripeAccount] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
+  const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+
+  const fetchStripeAccount = async () => {
+    if (!session?.user) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch("/api/stripe/account");
+      if (response.ok) {
+        const data = await response.json();
+        setStripeAccount(data);
+      }
+    } catch (error) {
+      console.error("Error fetching Stripe account:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchStripeAccount() {
-      if (!session?.user) return;
-
-      setLoading(true);
-      try {
-        const response = await fetch("/api/stripe/account");
-        if (response.ok) {
-          const data = await response.json();
-          setStripeAccount(data);
-        }
-      } catch (error) {
-        console.error("Error fetching Stripe account:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchStripeAccount();
   }, [session]);
 
@@ -68,24 +77,24 @@ export default function ConnectPage() {
   };
 
   const handleDisconnectStripe = async () => {
-    if (!confirm("Are you sure you want to disconnect your Stripe account?")) {
-      return;
-    }
-
+    setDisconnecting(true);
     try {
       const response = await fetch("/api/stripe/disconnect", {
         method: "POST",
       });
 
       if (response.ok) {
-        setStripeAccount(null);
+        await fetchStripeAccount();
         toast.success("Stripe account disconnected");
+        setShowDisconnectDialog(false);
       } else {
         toast.error("Failed to disconnect Stripe account");
       }
     } catch (error) {
       console.error("Error disconnecting Stripe:", error);
       toast.error("Failed to disconnect Stripe account");
+    } finally {
+      setDisconnecting(false);
     }
   };
 
@@ -172,7 +181,7 @@ export default function ConnectPage() {
                       onClick={handleConnectStripe}
                       disabled={connecting}
                       size="lg"
-                      className="px-8"
+                      className="px-8 cursor"
                     >
                       {connecting ? (
                         <>
@@ -239,9 +248,11 @@ export default function ConnectPage() {
                       <div>
                         <h4 className="font-medium text-sm">Connected</h4>
                         <p className="text-sm text-muted-foreground">
-                          {new Date(
-                            stripeAccount.created * 1000
-                          ).toLocaleDateString()}
+                          {stripeAccount.connectDate
+                            ? new Date(
+                                stripeAccount.connectDate
+                              ).toLocaleDateString()
+                            : "N/A"}
                         </p>
                       </div>
                     </div>
@@ -259,7 +270,8 @@ export default function ConnectPage() {
                       </Button>
                       <Button
                         variant="destructive"
-                        onClick={handleDisconnectStripe}
+                        onClick={() => setShowDisconnectDialog(true)}
+                        className="cursor-pointer"
                       >
                         Disconnect Account
                       </Button>
@@ -310,6 +322,45 @@ export default function ConnectPage() {
           )}
         </div>
       </div>
+
+      {/* dialog */}
+      <Dialog
+        open={showDisconnectDialog}
+        onOpenChange={setShowDisconnectDialog}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Disconnect Stripe Account</DialogTitle>
+          </DialogHeader>
+          <div>
+            Are you sure you want to disconnect your Stripe account? You will
+            not be able to receive payments until you reconnect.
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDisconnectDialog(false)}
+              disabled={disconnecting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDisconnectStripe}
+              disabled={disconnecting}
+            >
+              {disconnecting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Disconnecting...
+                </>
+              ) : (
+                "Disconnect"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -51,6 +51,14 @@ import { Product, UserStats } from "@/lib/types/product";
 import { toast } from "sonner";
 import Link from "next/link";
 
+function parseProductDates(product: any): Product {
+  return {
+    ...product,
+    createdAt: product.createdAt ? new Date(product.createdAt) : null,
+    updatedAt: product.updatedAt ? new Date(product.updatedAt) : null,
+  };
+}
+
 export default function DashboardPage() {
   const { data: session, isPending } = useSession();
   const [products, setProducts] = useState<Product[]>([]);
@@ -80,7 +88,7 @@ export default function DashboardPage() {
         ]);
 
         if (productsResult.success) {
-          setProducts(productsResult.data || []);
+          setProducts((productsResult.data || []).map(parseProductDates));
         } else {
           toast.error(productsResult.error || "Failed to fetch products");
         }
@@ -136,7 +144,7 @@ export default function DashboardPage() {
         // Refresh the products list
         const productsResult = await getUserProducts();
         if (productsResult.success) {
-          setProducts(productsResult.data || []);
+          setProducts((productsResult.data || []).map(parseProductDates));
         }
       } else {
         toast.error(result.error || "Failed to delete product");
@@ -306,7 +314,9 @@ export default function DashboardPage() {
                             // Refresh data after creating
                             getUserProducts().then((result) => {
                               if (result.success)
-                                setProducts(result.data || []);
+                                setProducts(
+                                  (result.data || []).map(parseProductDates)
+                                );
                             });
                             getUserStats().then((result) => {
                               if (result.success)
@@ -542,7 +552,8 @@ export default function DashboardPage() {
                     setEditOpen(false);
                     // Refresh data after editing
                     getUserProducts().then((result) => {
-                      if (result.success) setProducts(result.data || []);
+                      if (result.success)
+                        setProducts((result.data || []).map(parseProductDates));
                     });
                     getUserStats().then((result) => {
                       if (result.success)

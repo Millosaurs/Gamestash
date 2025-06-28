@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Inter, Lexend, Spectral } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { Toaster } from "sonner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -32,6 +33,7 @@ export default function RootLayout({
     >
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <Toaster />
           {children}
         </ThemeProvider>
       </body>

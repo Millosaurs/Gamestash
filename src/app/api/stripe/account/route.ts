@@ -28,7 +28,10 @@ export async function GET(req: NextRequest) {
 
   try {
     const account = await stripe.accounts.retrieve(dbUser.stripeAccountId);
-    return NextResponse.json(account);
+    return NextResponse.json({
+      id: account.id,
+      connectDate: dbUser.connectDate,
+    });
   } catch (error) {
     return NextResponse.json(null);
   }
