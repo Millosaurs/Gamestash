@@ -68,7 +68,7 @@ export async function createAdminSession(adminId: string) {
   await db.insert(adminSessions).values({
     adminId,
     token,
-    expiresAt,
+    expiresAt: expiresAt.toISOString(),
   });
 
   const cookies = await getCookies();
