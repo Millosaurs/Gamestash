@@ -241,7 +241,7 @@ export default function DevelopersPage() {
                   placeholder="Search developers..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-background/50 backdrop-blur-sm border-border/50 focus:bg-background"
+                  className="pl-10 bg-background/50 border-border/50 focus:bg-background"
                 />
               </div>
 

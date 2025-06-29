@@ -324,6 +324,7 @@ export default function ProductPage() {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [likeLoading, setLikeLoading] = useState(false);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -354,7 +355,9 @@ export default function ProductPage() {
       toast.error("Please login to like products");
       return;
     }
+    if (likeLoading) return; // Prevent spamming
 
+    setLikeLoading(true);
     try {
       const response = await fetch(`/api/products/${productId}/like`, {
         method: "POST",
@@ -364,7 +367,12 @@ export default function ProductPage() {
 
       if (result.success) {
         setLiked(result.liked);
-        setLikeCount((prev) => (result.liked ? prev + 1 : prev - 1));
+        // Use the like count from the server if available
+        if (typeof result.likeCount === "number") {
+          setLikeCount(result.likeCount);
+        } else {
+          setLikeCount((prev) => (result.liked ? prev + 1 : prev - 1));
+        }
         toast.success(
           result.liked ? "Added to favorites!" : "Removed from favorites"
         );
@@ -374,6 +382,8 @@ export default function ProductPage() {
     } catch (error) {
       console.error("Error toggling like:", error);
       toast.error("Failed to toggle like");
+    } finally {
+      setLikeLoading(false);
     }
   };
 
@@ -523,6 +533,7 @@ export default function ProductPage() {
                       variant="outline"
                       size="sm"
                       onClick={handleLike}
+                      disabled={likeLoading}
                       className={cn(
                         "transition-all duration-200",
                         liked &&
@@ -587,7 +598,7 @@ export default function ProductPage() {
                   {product.hasPurchased ? (
                     <>
                       <Download className="w-5 h-5 mr-2" />
-                      Get Now 
+                      Get Now
                     </>
                   ) : (
                     <>

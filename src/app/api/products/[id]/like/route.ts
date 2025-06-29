@@ -1,8 +1,12 @@
-// app/api/products/[id]/like/route.ts
 import { NextResponse } from "next/server";
 import { toggleProductLike } from "@/lib/actions/products";
 
-export async function POST(_: Request, { params }: any) {
+export async function POST(
+  request: Request,
+  contextPromise: Promise<{ params: Promise<{ id: string }> }>
+) {
+  const context = await contextPromise;
+  const params = await context.params;
   const { id } = params;
 
   if (!id) {
