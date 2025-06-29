@@ -334,8 +334,11 @@ export default function ProductPage() {
       try {
         const result = await getProductById(productId);
         if (result.success && result.data) {
-          setProduct(result.data);
-          setLikeCount(result.data.likes || 0);
+          if (result.success && result.data) {
+            setProduct(result.data);
+            setLikeCount(result.data.likes || 0);
+            setLiked(result.data.liked ?? false);
+          }
         } else {
           toast.error(result.error || "Failed to load product");
         }

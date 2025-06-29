@@ -147,11 +147,6 @@ export default function DeveloperDetailPage() {
     window.location.href = `/product/${id}`;
   };
 
-  const handleHeartClick = (e: React.MouseEvent, productId: number) => {
-    e.stopPropagation();
-    // Implement like logic here
-  };
-
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
@@ -505,7 +500,7 @@ export default function DeveloperDetailPage() {
                     : "space-y-4"
                 }
               >
-                {developer.products.map((product) => (
+                {developer.products.map((product: any) => (
                   <ProductCard
                     key={product.id}
                     product={{

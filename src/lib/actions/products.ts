@@ -414,7 +414,10 @@ export async function getProductById(productId: string) {
 
     // Check if the current user has purchased this product
     let hasPurchased = false;
+    let liked = false;
+
     if (session?.user) {
+      // Check purchase
       const sale = await db
         .select()
         .from(productSales)
@@ -428,6 +431,20 @@ export async function getProductById(productId: string) {
         .limit(1);
 
       hasPurchased = sale.length > 0;
+
+      // Check like
+      const like = await db
+        .select()
+        .from(productLikes)
+        .where(
+          and(
+            eq(productLikes.productId, productId),
+            eq(productLikes.userId, session.user.id)
+          )
+        )
+        .limit(1);
+
+      liked = like.length > 0;
     }
 
     // Increment view count
@@ -436,7 +453,14 @@ export async function getProductById(productId: string) {
       .set({ views: sql`${products.views} + 1` })
       .where(eq(products.id, productId));
 
-    return { success: true, data: { ...product[0], hasPurchased } };
+    return {
+      success: true,
+      data: {
+        ...product[0],
+        hasPurchased,
+        liked,
+      },
+    };
   } catch (error) {
     console.error("Error fetching product:", error);
     return { success: false, error: "Failed to fetch product" };
@@ -567,8 +591,11 @@ export async function toggleProductLike(productId: string) {
 
       await db
         .update(products)
-        .set({ likes: sql`${products.likes} - 1` })
+        .set({ likes: sql`GREATEST(${products.likes} - 1, 0)` })
         .where(eq(products.id, productId));
+
+      // Optionally revalidate
+      // revalidatePath(`/products/${productId}`);
 
       return { success: true, liked: false };
     } else {
@@ -576,12 +603,16 @@ export async function toggleProductLike(productId: string) {
       await db.insert(productLikes).values({
         productId,
         userId: session.user.id,
+        // createdAt: new Date().toISOString(), // if you have this field
       });
 
       await db
         .update(products)
         .set({ likes: sql`${products.likes} + 1` })
         .where(eq(products.id, productId));
+
+      // Optionally revalidate
+      // revalidatePath(`/products/${productId}`);
 
       return { success: true, liked: true };
     }

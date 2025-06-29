@@ -1,7 +1,11 @@
+// components/product-card.tsx
+"use client";
+
 import { Heart, Eye, Star } from "lucide-react";
-import { Badge } from "@/components/ui/badge"; // <-- Correct import
+import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import Image from "next/image";
+import { toast } from "sonner";
 
 export function ProductCard({
   product,
@@ -12,7 +16,7 @@ export function ProductCard({
   viewMode: "grid" | "list";
   onCardClick: (id: string) => void;
 }) {
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(product.liked ?? false);
   const [likeCount, setLikeCount] = useState(product.likes || 0);
   const [isLiking, setIsLiking] = useState(false);
 
@@ -27,12 +31,17 @@ export function ProductCard({
       const result = await response.json();
       if (result.success) {
         setLiked(result.liked);
-        setLikeCount((prev: number) => (result.liked ? prev + 1 : prev - 1));
+        setLikeCount((prev: number) =>
+          result.liked ? prev + 1 : Math.max(prev - 1, 0)
+        );
+        toast.success(
+          result.liked ? "Added to favorites!" : "Removed from favorites"
+        );
       } else {
-        console.error("Failed to toggle like:", result.error);
+        toast.error(result.error || "Failed to toggle like");
       }
     } catch (error) {
-      console.error("Error toggling like:", error);
+      toast.error("Error toggling like");
     } finally {
       setIsLiking(false);
     }
@@ -116,15 +125,16 @@ export function ProductCard({
           <button
             className="absolute top-3 right-3 p-2 rounded-full bg-white/80 text-primary hover:bg-primary hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow disabled:opacity-50"
             aria-label={liked ? "Unlike" : "Like"}
+            aria-pressed={liked}
             onClick={handleLikeClick}
             disabled={isLiking}
             type="button"
           >
-            {liked ? (
-              <Heart className="h-5 w-5 fill-primary text-primary" />
-            ) : (
-              <Heart className="h-5 w-5" />
-            )}
+            <Heart
+              className={
+                liked ? "h-5 w-5 fill-primary text-primary" : "h-5 w-5"
+              }
+            />
           </button>
           {/* Featured badge */}
           {product.featured && (
@@ -161,6 +171,7 @@ export function ProductCard({
         <button
           className="absolute top-3 right-3 p-2 rounded-full bg-white/80 text-primary hover:bg-primary hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-primary shadow disabled:opacity-50"
           aria-label={liked ? "Unlike" : "Like"}
+          aria-pressed={liked}
           onClick={handleLikeClick}
           disabled={isLiking}
           type="button"

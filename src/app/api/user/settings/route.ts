@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
 import { getCachedSession } from "@/lib/session-cache";
 
 const sessionCache = new Map();
