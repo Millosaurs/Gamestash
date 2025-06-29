@@ -3,13 +3,13 @@
 import * as React from "react";
 import {
   Command,
-  FileArchive,
   Frame,
   LifeBuoy,
   Map,
   PieChart,
   Send,
   SquareTerminal,
+  Gamepad,
 } from "lucide-react";
 
 import { NavMain } from "@/components/sidebar/nav-main";
@@ -191,7 +191,7 @@ export function AppSidebar({
             <SidebarMenuButton size="lg" asChild>
               <a href="/">
                 <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <FileArchive className="size-4" />
+                  <Gamepad className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate text-sidebar-foreground font-medium">

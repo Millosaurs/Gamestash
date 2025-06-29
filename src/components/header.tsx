@@ -1,6 +1,6 @@
 "use client";
 import {
-  FileArchive,
+  Gamepad,
   Menu,
   X,
   Sun,
@@ -246,7 +246,7 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 group min-w-0">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary transition-all duration-200 group-hover:scale-105 group-hover:shadow-lg">
-              <FileArchive className="h-5 w-5 text-primary-foreground" />
+              <Gamepad className="h-5 w-5 text-primary-foreground" />
             </div>
             <h1 className="text-xl font-bold text-foreground font-display hidden sm:block truncate max-w-[120px]">
               Gamestash

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Key, Sparkles, ArrowLeft, FileArchive } from "lucide-react";
+import { Loader2, Key, Sparkles, ArrowLeft, Gamepad } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { signIn } from "@/lib/auth-client";
@@ -27,7 +27,7 @@ export default function AuthPage() {
           <CardHeader className="text-center">
             <div className="flex items-center justify-center space-x-3 mb-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-                <FileArchive className="h-6 w-6 text-primary-foreground" />
+                <Gamepad className="h-6 w-6 text-primary-foreground" />
               </div>
               <span className="font-bold text-2xl text-foreground font-display">
                 Gamestash
