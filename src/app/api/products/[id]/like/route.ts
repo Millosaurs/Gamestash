@@ -6,11 +6,12 @@ import { getCachedSession } from "@/lib/session-cache";
 
 const sessionCache = new Map();
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request) {
   try {
+    // Get the product id from the URL
+    const url = new URL(request.url);
+    const productId = url.pathname.split("/").filter(Boolean).pop();
+
     // Use the same cache key logic as your settings route
     const cacheKey = request.headers.get("authorization") || "anon";
     let session = sessionCache.get(cacheKey);
@@ -23,7 +24,6 @@ export async function POST(
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const productId = params.id;
     const userId = session.user.id;
 
     if (!productId) {
