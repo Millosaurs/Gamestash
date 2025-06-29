@@ -592,7 +592,7 @@ export default function ProductPage() {
                   onClick={product.hasPurchased ? handleGetNow : handleBuyNow}
                   size="lg"
                   className={cn(
-                    "w-full text-lg py-6 font-semibold shadow-md",
+                    "w-full text-lg py-6 font-semibold shadow-md cursor-pointer",
                     product.hasPurchased
                       ? "bg-blue-600 hover:bg-blue-700 text-white"
                       : "bg-green-600 hover:bg-green-700 text-white"
