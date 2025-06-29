@@ -57,10 +57,10 @@ const data = {
           title: "Analytics",
           url: "/dashboard/analytics",
         },
-        {
-          title: "Reviews",
-          url: "/dashboard/reviews",
-        },
+        // {
+        //   title: "Reviews",
+        //   url: "/dashboard/reviews",
+        // },
       ],
     },
     // {

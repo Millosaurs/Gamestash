@@ -13,6 +13,7 @@ import {
   TrendingUp,
   DollarSign,
   Package,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,6 +76,9 @@ export default function DashboardPage() {
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editProductId, setEditProductId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -131,17 +135,18 @@ export default function DashboardPage() {
     setEditOpen(true);
   };
 
-  const handleDeleteProduct = async (productId: string) => {
-    if (!confirm("Are you sure you want to delete this product?")) {
-      return;
-    }
+  const handleDeleteClick = (product: Product) => {
+    setProductToDelete(product);
+    setDeleteDialogOpen(true);
+  };
 
+  const handleConfirmDelete = async () => {
+    if (!productToDelete) return;
+    setDeleting(true); // Start loader
     try {
-      const result = await deleteProduct(productId);
-
+      const result = await deleteProduct(productToDelete.id);
       if (result.success) {
         toast.success("Product deleted successfully");
-        // Refresh the products list
         const productsResult = await getUserProducts();
         if (productsResult.success) {
           setProducts((productsResult.data || []).map(parseProductDates));
@@ -152,6 +157,10 @@ export default function DashboardPage() {
     } catch (error) {
       console.error("Error deleting product:", error);
       toast.error("An unexpected error occurred");
+    } finally {
+      setDeleting(false); // Stop loader
+      setDeleteDialogOpen(false);
+      setProductToDelete(null);
     }
   };
 
@@ -485,9 +494,7 @@ export default function DashboardPage() {
                                   Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                  onClick={() =>
-                                    handleDeleteProduct(product.id)
-                                  }
+                                  onClick={() => handleDeleteClick(product)}
                                   className="text-destructive"
                                 >
                                   <Trash2 className="mr-2 h-4 w-4" />
@@ -574,6 +581,38 @@ export default function DashboardPage() {
           </DialogContent>
         </Dialog>
       </div>
+      {/* DELETEING */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogTitle>Delete Product</DialogTitle>
+          <div className="py-4">
+            <p>
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">{productToDelete?.title}</span>?
+              This action cannot be undone.
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={!productToDelete || deleting}
+            >
+              {deleting ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : null}
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
