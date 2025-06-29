@@ -197,7 +197,7 @@ export default function LandingPage() {
                 placeholder="Search for setups, games, or creators..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 pr-4 h-12 text-base shadow-md bg-white/80 backdrop-blur border-0"
+                className="pl-10 pr-4 h-12 text-base shadow-md bg-white/80  border-0"
               />
             </div>
             <Button
