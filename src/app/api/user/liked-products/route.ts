@@ -4,24 +4,16 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { productLikes, products, user } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { headers } from "next/headers";
-import { getCachedSession } from "@/lib/session-cache";
-
-// Add session cache
-const sessionCache = new Map();
 
 export async function GET(request: NextRequest) {
   try {
-    const cacheKey = request.headers.get("authorization") || "anon";
-    let session = sessionCache.get(cacheKey);
-    if (!session) {
-      session = await getCachedSession();
-      sessionCache.set(cacheKey, session);
-    }
+    const session = await auth.api.getSession({ headers: request.headers });
 
     if (!session?.user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
+
+    const userId = session.user.id;
 
     const likedProducts = await db
       .select({

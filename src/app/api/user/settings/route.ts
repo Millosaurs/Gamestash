@@ -2,22 +2,19 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { getCachedSession } from "@/lib/session-cache";
+import { auth } from "@/lib/auth";
 
 const sessionCache = new Map();
 
 export async function PUT(request: Request) {
   try {
-    const cacheKey = request.headers.get("authorization") || "anon";
-    let session = sessionCache.get(cacheKey);
-    if (!session) {
-      session = await getCachedSession();
-      sessionCache.set(cacheKey, session);
-    }
+    const session = await auth.api.getSession({ headers: request.headers });
 
     if (!session?.user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
+
+    const userId = session.user.id;
 
     const settings = await request.json();
 
