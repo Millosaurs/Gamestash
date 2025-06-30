@@ -2,9 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { products, productLikes } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
-import { getCachedSession } from "@/lib/session-cache";
-
-const sessionCache = new Map();
+import { auth } from "@/lib/auth"; // Your Better Auth instance
 
 export async function POST(request: Request) {
   try {
@@ -12,13 +10,8 @@ export async function POST(request: Request) {
     const url = new URL(request.url);
     const productId = url.pathname.split("/").filter(Boolean).pop();
 
-    // Use the same cache key logic as your settings route
-    const cacheKey = request.headers.get("authorization") || "anon";
-    let session = sessionCache.get(cacheKey);
-    if (!session) {
-      session = await getCachedSession();
-      sessionCache.set(cacheKey, session);
-    }
+    // Get session using Better Auth
+    const session = await auth.api.getSession({ headers: request.headers });
 
     if (!session?.user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
