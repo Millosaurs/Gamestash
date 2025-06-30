@@ -49,6 +49,14 @@ import Link from "next/link";
 import Header from "@/components/header";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 function isValidYouTubeUrl(url: string) {
   return /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}(&.*)?$/.test(
@@ -323,8 +331,10 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
-  const [quantity, setQuantity] = useState(1);
   const [likeLoading, setLikeLoading] = useState(false);
+  const [consentOpen, setConsentOpen] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -415,9 +425,23 @@ export default function ProductPage() {
     }
   };
 
-  const handleGetNow = () => {
-    // Redirect to download page or show download modal
-    window.location.href = `/products/${product.id}/download`;
+  const handleGetNowWithConsent = async () => {
+    // Call your API to record consent and allow download
+    try {
+      const res = await fetch(`/api/products/${product.id}/download`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ consentGiven: true }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        window.location.href = `/products/${product.id}/download`;
+      } else {
+        toast.error(data.error || "Failed to start download");
+      }
+    } catch (error) {
+      toast.error("Failed to start download");
+    }
   };
 
   const handleShare = async () => {
@@ -588,29 +612,31 @@ export default function ProductPage() {
 
               {/* Action Buttons */}
               <div className="space-y-4">
-                <Button
-                  onClick={product.hasPurchased ? handleGetNow : handleBuyNow}
-                  size="lg"
-                  className={cn(
-                    "w-full text-lg py-6 font-semibold shadow-md cursor-pointer",
-                    product.hasPurchased
-                      ? "bg-blue-600 hover:bg-blue-700 text-white"
-                      : "bg-green-600 hover:bg-green-700 text-white"
-                  )}
-                >
-                  {product.hasPurchased ? (
-                    <>
-                      <Download className="w-5 h-5 mr-2" />
-                      Get Now
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="w-5 h-5 mr-2" />
-                      Buy Now
-                    </>
-                  )}
-                </Button>
-
+                {product.hasPurchased ? (
+                  <Button
+                    onClick={() => setConsentOpen(true)}
+                    size="lg"
+                    className={cn(
+                      "w-full text-lg py-6 font-semibold shadow-md cursor-pointer",
+                      "bg-blue-600 hover:bg-blue-700 text-white"
+                    )}
+                  >
+                    <Download className="w-5 h-5 mr-2" />
+                    Get Now
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleBuyNow}
+                    size="lg"
+                    className={cn(
+                      "w-full text-lg py-6 font-semibold shadow-md cursor-pointer",
+                      "bg-green-600 hover:bg-green-700 text-white"
+                    )}
+                  >
+                    <Zap className="w-5 h-5 mr-2" />
+                    Buy Now
+                  </Button>
+                )}
                 <TrustBadges />
               </div>
             </div>
@@ -723,6 +749,39 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
+      {/* consent modal*/}
+      <Dialog open={consentOpen} onOpenChange={setConsentOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Important Notice</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 flex items-start gap-2">
+            <Checkbox
+              checked={consentChecked}
+              onCheckedChange={(val) => setConsentChecked(val === true)}
+              id="consent-checkbox"
+            />
+            <label
+              htmlFor="consent-checkbox"
+              className="cursor-pointer select-none"
+            >
+              I agree to receive the digital product immediately and waive my
+              right of withdrawal.
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConsentOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleGetNowWithConsent}
+              disabled={!consentChecked || downloading}
+            >
+              {downloading ? "Processing..." : "Continue"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

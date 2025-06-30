@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
       amount: ((session.amount_total ?? 0) / 100).toFixed(2),
       status: "completed",
       refunded: false,
+      consentGiven: true,
     });
   }
 

@@ -48,6 +48,7 @@ export interface CreateProductData {
   thumbnail?: string | null;
   video_url?: string | null;
   images: string[];
+  consent: boolean;
 }
 
 export interface UpdateProductData extends CreateProductData {

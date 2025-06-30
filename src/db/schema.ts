@@ -124,6 +124,7 @@ export const productSales = pgTable(
     status: text().default("completed").notNull(),
     createdAt: timestamp("created_at", { mode: "string" }).defaultNow(),
     refunded: boolean().default(false).notNull(),
+    consentGiven: boolean().default(false).notNull(),
   },
   (table) => [
     index("product_sales_created_at_idx").using(
