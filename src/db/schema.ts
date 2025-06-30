@@ -113,6 +113,47 @@ export const verification = pgTable("verification", {
   updatedAt: timestamp({ mode: "string" }),
 });
 
+export const adminCredentials = pgTable(
+  "admin_credentials",
+  {
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    username: text().notNull(),
+    passwordHash: text("password_hash").notNull(),
+    userId: text("user_id").notNull(),
+    createdAt: timestamp("created_at", { mode: "string" }).defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [user.id],
+      name: "admin_credentials_user_id_user_id_fk",
+    }),
+    unique("admin_credentials_username_unique").on(table.username),
+  ]
+);
+
+export const adminSessions = pgTable(
+  "admin_sessions",
+  {
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    adminId: text("admin_id").notNull(),
+    token: text().notNull(),
+    expiresAt: timestamp("expires_at", { mode: "string" }).notNull(),
+    createdAt: timestamp("created_at", { mode: "string" }).defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.adminId],
+      foreignColumns: [user.id],
+      name: "admin_sessions_admin_id_user_id_fk",
+    }),
+    unique("admin_sessions_token_unique").on(table.token),
+  ]
+);
+
+
+
 export const productSales = pgTable(
   "product_sales",
   {
@@ -243,24 +284,7 @@ export const productApprovals = pgTable(
   ]
 );
 
-export const adminSessions = pgTable(
-  "admin_sessions",
-  {
-    id: uuid().defaultRandom().primaryKey().notNull(),
-    adminId: text("admin_id").notNull(),
-    token: text().notNull(),
-    expiresAt: timestamp("expires_at", { mode: "string" }).notNull(),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow(),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.adminId],
-      foreignColumns: [user.id],
-      name: "admin_sessions_admin_id_user_id_fk",
-    }),
-    unique("admin_sessions_token_unique").on(table.token),
-  ]
-);
+
 
 export const products = pgTable(
   "products",
@@ -299,25 +323,7 @@ export const products = pgTable(
   ]
 );
 
-export const adminCredentials = pgTable(
-  "admin_credentials",
-  {
-    id: uuid().defaultRandom().primaryKey().notNull(),
-    username: text().notNull(),
-    passwordHash: text("password_hash").notNull(),
-    userId: text("user_id").notNull(),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow(),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [user.id],
-      name: "admin_credentials_user_id_user_id_fk",
-    }),
-    unique("admin_credentials_username_unique").on(table.username),
-  ]
-);
+
 
 export const productLikes = pgTable(
   "product_likes",
