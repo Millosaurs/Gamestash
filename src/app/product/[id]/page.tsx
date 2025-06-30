@@ -337,6 +337,10 @@ export default function ProductPage() {
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
+    if (consentOpen) setConsentChecked(false);
+  }, [consentOpen]);
+
+  useEffect(() => {
     async function fetchProduct() {
       if (!productId) return;
 
@@ -614,7 +618,7 @@ export default function ProductPage() {
               <div className="space-y-4">
                 {product.hasPurchased ? (
                   <Button
-                    onClick={() => setConsentOpen(true)}
+                    onClick={handleGetNowWithConsent}
                     size="lg"
                     className={cn(
                       "w-full text-lg py-6 font-semibold shadow-md cursor-pointer",
@@ -626,7 +630,7 @@ export default function ProductPage() {
                   </Button>
                 ) : (
                   <Button
-                    onClick={handleBuyNow}
+                    onClick={() => setConsentOpen(true)}
                     size="lg"
                     className={cn(
                       "w-full text-lg py-6 font-semibold shadow-md cursor-pointer",
@@ -774,7 +778,11 @@ export default function ProductPage() {
               Cancel
             </Button>
             <Button
-              onClick={handleGetNowWithConsent}
+              onClick={async () => {
+                setDownloading(true);
+                await handleBuyNow();
+                setDownloading(false);
+              }}
               disabled={!consentChecked || downloading}
             >
               {downloading ? "Processing..." : "Continue"}
