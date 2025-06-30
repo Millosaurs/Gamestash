@@ -1,15 +1,14 @@
 // src/lib/session-cache.ts
+export const sessionCache = new Map<string, { value: any; expires: number }>();
+const SESSION_TTL = 60 * 1000; // 1 minute TTL
+
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-
-const sessionCache = new Map<string, { value: any; expires: number }>();
-const SESSION_TTL = 60 * 1000; // 1 minute TTL
 
 export async function getCachedSession() {
   let cacheKey = "anon";
   if (typeof window === "undefined") {
     const hdrs = await headers();
-    // Try to use a session cookie or all cookies as cache key for better uniqueness
     const cookie = hdrs.get("cookie");
     if (cookie && cookie.length > 0) {
       cacheKey = cookie;

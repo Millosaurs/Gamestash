@@ -9,11 +9,22 @@ import {
   Settings,
   LogOut,
   Home,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
+import { signOut, useSession } from "@/lib/auth-client";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "./ui/dropdown-menu";
+import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
+import { usePathname, useSearchParams } from "next/navigation";
 
 // Types
 interface UserSession {
@@ -28,19 +39,6 @@ interface UserSession {
 interface SessionData {
   data: UserSession | null;
 }
-
-// Import your better-auth session hook
-import { useSession } from "@/lib/auth-client";
-
-// Import your dropdown and avatar components
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "./ui/dropdown-menu";
-import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 
 function ThemeToggle({ isMobile = false }) {
   const { setTheme, resolvedTheme } = useTheme();
@@ -90,6 +88,12 @@ function ThemeToggle({ isMobile = false }) {
 
 function MobileMenu({ session }: { session: UserSession | null }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const fullPath =
+    pathname + (searchParams.toString() ? `?${searchParams}` : "");
 
   const toggleMenu = () => setIsOpen(!isOpen);
   const closeMenu = () => setIsOpen(false);
@@ -204,13 +208,20 @@ function MobileMenu({ session }: { session: UserSession | null }) {
                     Account
                   </Link>
                   <button
-                    onClick={() => {
-                      window.location.href = "/auth";
+                    onClick={async () => {
+                      setSigningOut(true);
+                      await signOut();
+                      setSigningOut(false);
                       closeMenu();
                     }}
-                    className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-md transition-colors w-full text-left"
+                    className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-md transition-colors w-full text-left disabled:opacity-60"
+                    disabled={signingOut}
                   >
-                    <LogOut className="h-4 w-4" />
+                    {signingOut ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <LogOut className="h-4 w-4" />
+                    )}
                     Sign out
                   </button>
                 </div>
@@ -218,7 +229,9 @@ function MobileMenu({ session }: { session: UserSession | null }) {
                 <div className="border-t border-border pt-3">
                   <Button
                     onClick={() => {
-                      window.location.href = "/auth";
+                      window.location.href = `/auth?callback=${encodeURIComponent(
+                        fullPath
+                      )}`;
                       closeMenu();
                     }}
                     className="w-full justify-start gap-3 h-10"
@@ -238,6 +251,12 @@ function MobileMenu({ session }: { session: UserSession | null }) {
 
 export default function Header() {
   const { data: session }: SessionData = useSession();
+  const [signingOut, setSigningOut] = useState(false);
+
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const fullPath =
+    pathname + (searchParams.toString() ? `?${searchParams}` : "");
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
@@ -332,17 +351,30 @@ export default function Header() {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => (window.location.href = "/auth")}
+                    onClick={async () => {
+                      setSigningOut(true);
+                      await signOut();
+                      setSigningOut(false);
+                    }}
                     className="cursor-pointer text-destructive focus:text-destructive"
+                    disabled={signingOut}
                   >
-                    <LogOut className="mr-2 h-4 w-4" />
+                    {signingOut ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <LogOut className="mr-2 h-4 w-4" />
+                    )}
                     Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <Button
-                onClick={() => (window.location.href = "/auth")}
+                onClick={() => {
+                  window.location.href = `/auth?callback=${encodeURIComponent(
+                    fullPath
+                  )}`;
+                }}
                 className="h-10 px-4 rounded-lg transition-all duration-200 hover:shadow-md w-full"
               >
                 <User className="mr-2 h-4 w-4" />
