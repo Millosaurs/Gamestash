@@ -2,17 +2,17 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { user, products, productLikes } from "@/db/schema";
 import { eq, sql, desc, and } from "drizzle-orm";
-import { cookies } from "next/headers";
-import { getCachedSession } from "@/lib/session-cache";
+import { auth } from "@/lib/auth"; // Your Better Auth instance
 
 export async function GET(request: Request) {
   try {
-    // Use cookies for server-side auth
-    const cookieStore = await cookies();
-    const sessionToken =
-      cookieStore.get("next-auth.session-token")?.value ||
-      cookieStore.get("__Secure-next-auth.session-token")?.value;
-    let session = sessionToken ? await getCachedSession() : null;
+    // Get session using Better Auth
+    const session = await auth.api.getSession({ headers: request.headers });
+
+    //  want to restrict to authenticated users:
+    if (!session?.user) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
 
     // Get developers with their recent products
     const developers = await db
@@ -117,7 +117,7 @@ export async function GET(request: Request) {
           },
           joinedDate: developer.createdAt,
           recentProducts: productsWithLikes,
-          analytics, // merged analytics here
+          analytics,
         };
       })
     );
