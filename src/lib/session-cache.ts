@@ -5,7 +5,7 @@ const SESSION_TTL = 60 * 1000; // 1 minute TTL
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
-export async function getCachedSession() {
+export async function getCachedSession(sessionToken: string) {
   let cacheKey = "anon";
   if (typeof window === "undefined") {
     const hdrs = await headers();
