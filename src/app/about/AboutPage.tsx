@@ -196,7 +196,7 @@ export default function AboutPage() {
       </section>
 
       {/* Trusted Partners */}
-      <section className="py-16 bg-muted/20">
+      {/* <section className="py-16 bg-muted/20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center text-foreground mb-12 font-display">
             These brands trust us
@@ -226,7 +226,7 @@ export default function AboutPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Why Choose Us */}
       <section className="py-16">
@@ -373,7 +373,7 @@ export default function AboutPage() {
       </section>
 
       {/* Team Section */}
-      <section className="py-16">
+      {/* <section className="py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6 font-display">
@@ -411,7 +411,7 @@ export default function AboutPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Footer */}
       <footer className="border-t border-border/40 bg-muted/20">
