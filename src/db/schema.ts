@@ -152,8 +152,6 @@ export const adminSessions = pgTable(
   ]
 );
 
-
-
 export const productSales = pgTable(
   "product_sales",
   {
@@ -284,8 +282,6 @@ export const productApprovals = pgTable(
   ]
 );
 
-
-
 export const products = pgTable(
   "products",
   {
@@ -313,6 +309,7 @@ export const products = pgTable(
     approved: boolean().default(false).notNull(),
     rejected: boolean().default(false).notNull(),
     adminComment: text("admin_comment"),
+    file: text("file"),
   },
   (table) => [
     foreignKey({
@@ -322,8 +319,6 @@ export const products = pgTable(
     }),
   ]
 );
-
-
 
 export const productLikes = pgTable(
   "product_likes",

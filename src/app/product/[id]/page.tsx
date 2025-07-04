@@ -429,23 +429,8 @@ export default function ProductPage() {
     }
   };
 
-  const handleGetNowWithConsent = async () => {
-    // Call your API to record consent and allow download
-    try {
-      const res = await fetch(`/api/products/${product.id}/download`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ consentGiven: true }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        window.location.href = `/products/${product.id}/download`;
-      } else {
-        toast.error(data.error || "Failed to start download");
-      }
-    } catch (error) {
-      toast.error("Failed to start download");
-    }
+  const handleGetNowWithConsent = () => {
+    window.open(`/api/products/${product.id}/download`, "_blank");
   };
 
   const handleShare = async () => {

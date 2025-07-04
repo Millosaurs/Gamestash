@@ -16,3 +16,4 @@ export async function uploadToCloudinary(file: File, uploadPreset: string) {
   if (!res.ok) throw new Error("Cloudinary upload failed");
   return res.json(); // contains .secure_url
 }
+

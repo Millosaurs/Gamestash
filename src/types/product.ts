@@ -11,5 +11,6 @@ export type Product = {
   tags: string[];
   rating: number;
   featured: boolean;
+  file: string;
   uploadedAt: string;
 };

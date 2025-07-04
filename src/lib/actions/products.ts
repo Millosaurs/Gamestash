@@ -14,6 +14,24 @@ import { eq, desc, and, sql, count, gte, sum, lte } from "drizzle-orm";
 import { headers as nextHeaders } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { auth } from "../auth";
+import { deleteS3Object } from "@/lib/actions/s3";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+  api_key: process.env.CLOUDINARY_API_KEY!,
+  api_secret: process.env.CLOUDINARY_API_SECRET!,
+});
+
+async function deleteCloudinaryImage(publicId: string) {
+  if (!publicId) return;
+  try {
+    await cloudinary.uploader.destroy(publicId);
+  } catch (err) {
+    console.error("Failed to delete Cloudinary image:", err);
+    // Optionally: throw or just log
+  }
+}
 
 async function getRequestHeaders(): Promise<Headers> {
   const nh = await nextHeaders();
@@ -27,6 +45,21 @@ async function getRequestHeaders(): Promise<Headers> {
 async function getSession() {
   const hdrs = await getRequestHeaders();
   return await auth.api.getSession({ headers: hdrs });
+}
+
+function getCloudinaryPublicId(url: string): string | null {
+  try {
+    const parts = url.split("/");
+    const versionIndex = parts.findIndex((p) => p.startsWith("v"));
+    if (versionIndex === -1) return null;
+    // Remove extension
+    const fileWithExt = parts.slice(versionIndex + 1).join("/");
+    const file = fileWithExt.replace(/\.[^/.]+$/, "");
+    // Prepend folder if present
+    return file;
+  } catch {
+    return null;
+  }
 }
 
 type Product = {
@@ -49,6 +82,7 @@ type Product = {
   updatedAt: Date | string | null;
   userName: string | null;
   userAvatar: string | null;
+  file: string | null;
 };
 
 export interface CreateProductData {
@@ -62,6 +96,7 @@ export interface CreateProductData {
   thumbnail?: string | null;
   video_url?: string | null;
   images: string[];
+  file: string | null;
 }
 
 export interface UpdateProductData extends CreateProductData {
@@ -91,6 +126,7 @@ export async function createProduct(data: CreateProductData) {
         thumbnail: data.thumbnail,
         images: data.images,
         videoUrl: data.video_url,
+        file: data.file,
       })
       .returning();
 
@@ -140,6 +176,7 @@ export async function updateProduct(data: UpdateProductData) {
         thumbnail: data.thumbnail,
         images: data.images,
         videoUrl: data.video_url,
+        file: data.file,
         updatedAt: new Date().toISOString(),
       })
       .where(eq(products.id, data.id))
@@ -165,7 +202,7 @@ export async function deleteProduct(productId: string) {
       return { success: false, error: "Not authenticated" };
     }
 
-    // Check if user owns the product
+    // Fetch the product to get the file key
     const existingProduct = await db
       .select()
       .from(products)
@@ -178,6 +215,40 @@ export async function deleteProduct(productId: string) {
       return { success: false, error: "Product not found or unauthorized" };
     }
 
+    // Delete file from S3 if it exists
+    const fileKey = existingProduct[0].file;
+    if (fileKey) {
+      await deleteS3Object(fileKey);
+    }
+
+    // Delete images from Cloudinary
+    const images: string[] = existingProduct[0].images || [];
+    for (const imageUrl of images) {
+      const publicId = getCloudinaryPublicId(imageUrl);
+      if (publicId) {
+        await deleteCloudinaryImage(publicId);
+      }
+    }
+
+    // Delete thumbnail from Cloudinary (if present and stored in Cloudinary)
+    const thumbnailUrl = existingProduct[0].thumbnail;
+    if (thumbnailUrl) {
+      const publicId = getCloudinaryPublicId(thumbnailUrl);
+      if (publicId) {
+        await deleteCloudinaryImage(publicId);
+      }
+    }
+
+    // Delete related rows first
+    await db.delete(productSales).where(eq(productSales.productId, productId));
+    await db.delete(productLikes).where(eq(productLikes.productId, productId));
+    await db.delete(productViews).where(eq(productViews.productId, productId));
+    await db
+      .delete(dailyAnalytics)
+      .where(eq(dailyAnalytics.productId, productId));
+    // Add more if needed
+
+    // Now delete the product
     await db.delete(products).where(eq(products.id, productId));
 
     revalidatePath("/dashboard");
@@ -282,6 +353,7 @@ export async function getAllProducts(filters?: {
         updatedAt: products.updatedAt,
         userName: user.name,
         userAvatar: user.image,
+        file: products.file,
       })
       .from(products)
       .leftJoin(user, eq(products.userId, user.id))
@@ -416,6 +488,7 @@ export async function getProductById(productId: string) {
         userId: products.userId,
         userName: user.name,
         userAvatar: user.image,
+        file: products.file,
       })
       .from(products)
       .leftJoin(user, eq(products.userId, user.id))

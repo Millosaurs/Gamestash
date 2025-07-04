@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Upload, X, Plus, ImagePlus, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Upload,
+  X,
+  Plus,
+  ImagePlus,
+  Loader2,
+  PaperclipIcon,
+  AlertCircleIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +35,10 @@ import imageCompression from "browser-image-compression";
 import Image from "next/image";
 import Cropper from "react-easy-crop";
 import { getCroppedImg } from "@/lib/cropImage";
+import { getPresignedUploadUrl, deleteS3Object } from "@/lib/actions/s3";
+import { useFileUpload, formatBytes } from "@/hooks/use-file-upload";
+import { getCloudinaryPublicId } from "@/lib/utils/cloudinary";
+import { deleteCloudinaryImageAction } from "@/lib/actions/deleteCloudinaryImage";
 
 const gameOptions = [
   { value: "minecraft", label: "Minecraft" },
@@ -45,7 +58,9 @@ const categoryOptions = [
   { value: "streaming", label: "Streaming" },
 ];
 
-// Simple modal for cropping
+const ALLOWED_EXTENSIONS = [".zip", ".rar"];
+const MAX_SIZE = 100 * 1024 * 1024; // 100MB
+
 function Modal({
   open,
   onClose,
@@ -68,6 +83,242 @@ function Modal({
         {children}
       </div>
     </div>
+  );
+}
+
+// File Upload Card for .zip/.rar
+function FileUploadCard({
+  productFileKey,
+  setProductFileKey,
+  productFile,
+  setProductFile,
+  initialFileName,
+}: {
+  productFileKey: string | null;
+  setProductFileKey: (key: string | null) => void;
+  productFile: File | null;
+  setProductFile: (file: File | null) => void;
+  initialFileName?: string | null;
+}) {
+  const [
+    { files, isDragging, errors },
+    {
+      handleDragEnter,
+      handleDragLeave,
+      handleDragOver,
+      handleDrop,
+      openFileDialog,
+      removeFile,
+      getInputProps,
+    },
+  ] = useFileUpload({
+    maxSize: MAX_SIZE,
+    accept: ".zip,.rar",
+    initialFiles: [],
+  });
+
+  const [fileUploading, setFileUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [removingFile, setRemovingFile] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(
+    initialFileName || null
+  );
+
+  useEffect(() => {
+    setFileName(initialFileName || null);
+  }, [initialFileName]);
+
+  useEffect(() => {
+    const uploadFile = async () => {
+      if (!files[0]) return;
+
+      const file = files[0]?.file;
+      if (!(file instanceof File)) {
+        toast.error("Invalid file type.");
+        if (files[0]) removeFile(files[0].id);
+        return;
+      }
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      if (!ext || !ALLOWED_EXTENSIONS.includes(`.${ext}`)) {
+        toast.error("Only .zip and .rar files are allowed!");
+        removeFile(files[0].id);
+        return;
+      }
+      if (file.size > MAX_SIZE) {
+        toast.error("File too large! Max 100MB.");
+        removeFile(files[0].id);
+        return;
+      }
+
+      setFileUploading(true);
+      setUploadProgress(0);
+      try {
+        const { url, key } = await getPresignedUploadUrl(
+          file.name,
+          file.type,
+          file.size
+        );
+
+        // Use XMLHttpRequest to track progress
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("PUT", url, true);
+          xhr.setRequestHeader("Content-Type", file.type);
+
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              setUploadProgress((event.loaded / event.total) * 100);
+            }
+          };
+
+          xhr.onload = () => {
+            if (xhr.status === 200) {
+              resolve();
+            } else {
+              reject(new Error("Upload failed"));
+            }
+          };
+          xhr.onerror = () => reject(new Error("Upload failed"));
+          xhr.send(file);
+        });
+
+        setProductFile(file);
+        setProductFileKey(key);
+        setFileName(file.name);
+        toast.success("File uploaded!");
+      } catch (err: any) {
+        toast.error(err.message || "Upload failed");
+        if (files[0]) removeFile(files[0].id);
+        setProductFile(null);
+        setProductFileKey(null);
+        setFileName(null);
+      } finally {
+        setFileUploading(false);
+        setUploadProgress(0);
+      }
+    };
+
+    if (files.length === 1 && !productFileKey) {
+      uploadFile();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [files]);
+
+  // Remove file from S3
+  const handleRemove = async () => {
+    setRemovingFile(true);
+    if (productFileKey) {
+      try {
+        await deleteS3Object(productFileKey);
+      } catch (err) {
+        toast.error("Failed to delete file from S3");
+      }
+    }
+    if (files[0]) removeFile(files[0].id);
+    setProductFile(null);
+    setProductFileKey(null);
+    setFileName(null);
+    setRemovingFile(false);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-display">Product File</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div
+          role="button"
+          onClick={openFileDialog}
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          data-dragging={isDragging || undefined}
+          className="border-input hover:bg-accent/50 data-[dragging=true]:bg-accent/50 has-[input:focus]:border-ring has-[input:focus]:ring-ring/50 flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed p-4 transition-colors has-disabled:pointer-events-none has-disabled:opacity-50 has-[input:focus]:ring-[3px]"
+        >
+          <input
+            {...getInputProps()}
+            className="sr-only"
+            aria-label="Upload file"
+            disabled={!!productFileKey}
+          />
+
+          <div className="flex flex-col items-center justify-center text-center">
+            <div
+              className="bg-background mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border"
+              aria-hidden="true"
+            >
+              <Upload className="size-4 opacity-60" />
+            </div>
+            <p className="mb-1.5 text-sm font-medium">Upload file</p>
+            <p className="text-muted-foreground text-xs">
+              Drag & drop or click to browse (max. {formatBytes(MAX_SIZE)})
+            </p>
+          </div>
+        </div>
+
+        {errors.length > 0 && (
+          <div
+            className="text-destructive flex items-center gap-1 text-xs mt-2"
+            role="alert"
+          >
+            <AlertCircleIcon className="size-3 shrink-0" />
+            <span>{errors[0]}</span>
+          </div>
+        )}
+
+        {productFileKey && (
+          <div className="space-y-2 mt-2">
+            <div className="flex items-center justify-between gap-2 rounded-xl border px-4 py-2">
+              <div className="flex items-center gap-3 overflow-hidden">
+                <PaperclipIcon
+                  className="size-4 shrink-0 opacity-60"
+                  aria-hidden="true"
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-medium">
+                    {fileName || "Product File"}
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-muted-foreground/80 hover:text-foreground -me-2 size-8 hover:bg-transparent"
+                onClick={handleRemove}
+                aria-label="Remove file"
+                disabled={removingFile}
+              >
+                {removingFile ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <X className="size-4" aria-hidden="true" />
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {fileUploading && (
+          <div className="mt-2">
+            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-2 bg-primary transition-all"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Uploading file... {Math.round(uploadProgress)}%
+            </p>
+          </div>
+        )}
+
+        <p className="text-xs text-muted-foreground mt-2">
+          Allowed: .RAR & .ZIP // Max 100MB.
+        </p>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -233,6 +484,15 @@ export function EditProductForm({
   const [pendingAdditionalIndex, setPendingAdditionalIndex] = useState<
     number | null
   >(null);
+  const [compressionProgress, setCompressionProgress] = useState<number>(0);
+  const [isCompressing, setIsCompressing] = useState<boolean>(false);
+
+  // File upload state
+  const [productFile, setProductFile] = useState<File | null>(null);
+  const [productFileKey, setProductFileKey] = useState<string | null>(null);
+  const [initialFileName, setInitialFileName] = useState<string | null>(null);
+  const [removingImageIdx, setRemovingImageIdx] = useState<number | null>(null);
+  const [removingThumbnail, setRemovingThumbnail] = useState(false);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -256,6 +516,13 @@ export function EditProductForm({
           setTags(product.tags || []);
           setThumbnail(product.thumbnail || null);
           setImages(product.images || []);
+          setProductFileKey(product.file || null);
+
+          // If you want to show a file name, you can extract it from the S3 key:
+          // (Assuming product.file is something like "uploads/filename.zip")
+          setInitialFileName(
+            product.file ? product.file.split("/").pop()! : null
+          );
         } else {
           toast.error("Failed to load product");
         }
@@ -303,7 +570,6 @@ export function EditProductForm({
         setCropImageSrc(e.target?.result as string);
         setShowCrop(true);
         setIsCroppingThumbnail(true);
-        // Store the original file for later use
         (window as any)._originalCropFile = file;
       };
       reader.readAsDataURL(file);
@@ -329,7 +595,6 @@ export function EditProductForm({
         setIsCroppingThumbnail(false);
         setCropImageSrc(e.target?.result as string);
         setShowCrop(true);
-        // Store the files for later use
         (window as any)._pendingCropFiles = filesToProcess;
         (window as any)._pendingCropIndex = 0;
         setPendingAdditionalIndex(images.length); // add at the end
@@ -345,6 +610,8 @@ export function EditProductForm({
   // Save cropped image as thumbnail or additional image
   const handleCropSave = async () => {
     if (!cropImageSrc || !croppedAreaPixels) return;
+    setIsCompressing(true);
+    setCompressionProgress(0);
     // Use the original file for cropping
     let fileToCrop: File | null = null;
     if (isCroppingThumbnail) {
@@ -358,6 +625,8 @@ export function EditProductForm({
       toast.error("No file to crop");
       setShowCrop(false);
       setCropImageSrc(null);
+      setIsCompressing(false);
+      setCompressionProgress(0);
       return;
     }
     // Convert file to data URL before cropping
@@ -389,6 +658,7 @@ export function EditProductForm({
       maxSizeMB: 1,
       maxWidthOrHeight: 1920,
       useWebWorker: true,
+      onProgress: (progress) => setCompressionProgress(progress),
     });
     // Upload to Cloudinary
     const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
@@ -396,6 +666,8 @@ export function EditProductForm({
       toast.error("Cloudinary upload preset is not configured.");
       setShowCrop(false);
       setCropImageSrc(null);
+      setIsCompressing(false);
+      setCompressionProgress(0);
       return;
     }
     let cloudinaryUrl = null;
@@ -409,6 +681,8 @@ export function EditProductForm({
       toast.error("Cloudinary upload failed");
       setShowCrop(false);
       setCropImageSrc(null);
+      setIsCompressing(false);
+      setCompressionProgress(0);
       return;
     }
     if (isCroppingThumbnail) {
@@ -437,10 +711,41 @@ export function EditProductForm({
     }
     setShowCrop(false);
     setCropImageSrc(null);
+    setIsCompressing(false);
+    setCompressionProgress(0);
   };
 
-  const handleRemoveImage = (index: number) => {
+  // Remove image from Cloudinary and state
+  const handleRemoveImage = async (index: number) => {
+    setRemovingImageIdx(index);
+    const imageUrl = images[index];
+    const publicId = getCloudinaryPublicId(imageUrl);
+    if (publicId) {
+      try {
+        await deleteCloudinaryImageAction(publicId);
+      } catch (err) {
+        toast.error("Failed to delete image from Cloudinary");
+      }
+    }
     setImages((prev) => prev.filter((_, i) => i !== index));
+    setRemovingImageIdx(null);
+  };
+
+  // Remove thumbnail from Cloudinary and state
+  const handleRemoveThumbnail = async () => {
+    setRemovingThumbnail(true);
+    if (thumbnail) {
+      const publicId = getCloudinaryPublicId(thumbnail);
+      if (publicId) {
+        try {
+          await deleteCloudinaryImageAction(publicId);
+        } catch (err) {
+          toast.error("Failed to delete thumbnail from Cloudinary");
+        }
+      }
+      setThumbnail(null);
+    }
+    setRemovingThumbnail(false);
   };
 
   const handleSubmit = async (status: "draft" | "published") => {
@@ -450,6 +755,10 @@ export function EditProductForm({
     }
     if (formData.videoUrl && !isValidYouTubeUrl(formData.videoUrl)) {
       toast.error("Please enter a valid YouTube video URL");
+      return;
+    }
+    if (!productFileKey) {
+      toast.error("Please upload a product file");
       return;
     }
 
@@ -468,6 +777,7 @@ export function EditProductForm({
         thumbnail,
         images,
         video_url: formData.videoUrl,
+        file: productFileKey,
       };
 
       const result = await updateProduct(productData);
@@ -520,12 +830,33 @@ export function EditProductForm({
               }
             />
           )}
+          {isCompressing && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-10">
+              <div className="w-2/3">
+                <div className="h-2 bg-gray-300 rounded-full overflow-hidden">
+                  <div
+                    className="h-2 bg-primary transition-all"
+                    style={{ width: `${compressionProgress}%` }}
+                  />
+                </div>
+                <p className="text-xs text-white mt-2 text-center">
+                  Compressing image... {Math.round(compressionProgress)}%
+                </p>
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex justify-end gap-2 mt-4">
-          <Button variant="outline" onClick={() => setShowCrop(false)}>
+          <Button
+            variant="outline"
+            onClick={() => setShowCrop(false)}
+            disabled={isCompressing}
+          >
             Cancel
           </Button>
-          <Button onClick={handleCropSave}>Crop & Save</Button>
+          <Button onClick={handleCropSave} disabled={isCompressing}>
+            Crop & Save
+          </Button>
         </div>
       </Modal>
 
@@ -705,9 +1036,14 @@ export function EditProductForm({
                         variant="destructive"
                         size="sm"
                         className="absolute top-2 right-2"
-                        onClick={() => setThumbnail(null)}
+                        onClick={handleRemoveThumbnail}
+                        disabled={removingThumbnail}
                       >
-                        <X className="w-4 h-4" />
+                        {removingThumbnail ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <X className="w-4 h-4" />
+                        )}
                       </Button>
                     </div>
                   ) : (
@@ -753,7 +1089,7 @@ export function EditProductForm({
                   {images.map((img, idx) => (
                     <div
                       key={idx}
-                      className="relative w-24 aspect-square rounded-lg overflow-hidden border"
+                      className="relative w-24 aspect-video rounded-lg overflow-hidden border"
                     >
                       <Image
                         src={img}
@@ -763,11 +1099,16 @@ export function EditProductForm({
                       />
                       <Button
                         variant="destructive"
-                        size="icon"
-                        className="absolute top-1 right-1"
-                        onClick={() => handleRemoveImage(idx)}
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={async () => await handleRemoveImage(idx)}
+                        disabled={removingImageIdx === idx}
                       >
-                        <X className="w-4 h-4" />
+                        {removingImageIdx === idx ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <X className="w-4 h-4" />
+                        )}
                       </Button>
                     </div>
                   ))}
@@ -784,7 +1125,6 @@ export function EditProductForm({
                     />
                     <Button
                       variant="outline"
-                      size="icon"
                       className="w-24 h-20 flex flex-col items-center justify-center"
                       onClick={() =>
                         images.length < 5
@@ -825,6 +1165,14 @@ export function EditProductForm({
               </p>
             )}
           </div>
+          {/* Product File Upload */}
+          <FileUploadCard
+            productFileKey={productFileKey}
+            setProductFileKey={setProductFileKey}
+            productFile={productFile}
+            setProductFile={setProductFile}
+            initialFileName={initialFileName}
+          />
         </div>
         {/* Live Preview Section */}
         <div className="hidden lg:block">
