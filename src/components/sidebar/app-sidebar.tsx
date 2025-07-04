@@ -5,7 +5,7 @@ import {
   Command,
   Frame,
   LifeBuoy,
-  Map,
+  ShoppingCart as Cart,
   PieChart,
   Send,
   SquareTerminal,
@@ -166,9 +166,9 @@ export function AppSidebar({
       icon: Command,
     },
     {
-      title: "Approval",
-      url: "/admin/approval",
-      icon: Map,
+      title: "Sales",
+      url: "/admin/sales",
+      icon: Cart,
     },
     {
       title: "Statistics",

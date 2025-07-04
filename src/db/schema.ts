@@ -164,6 +164,7 @@ export const productSales = pgTable(
     createdAt: timestamp("created_at", { mode: "string" }).defaultNow(),
     refunded: boolean().default(false).notNull(),
     consentGiven: boolean().default(false).notNull(),
+    stripePaymentIntentId: text("stripe_payment_intent_id"),
   },
   (table) => [
     index("product_sales_created_at_idx").using(

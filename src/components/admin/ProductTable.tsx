@@ -151,27 +151,6 @@ export default function ProductTable() {
                     >
                       <Button
                         size="sm"
-                        onClick={() => handleApprove(p.id)}
-                        disabled={p.approved || approveLoading === p.id}
-                      >
-                        {approveLoading === p.id ? (
-                          <Loader2 className="animate-spin w-4 h-4 mr-1 inline" />
-                        ) : null}
-                        Approve
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleReject(p.id)}
-                        disabled={p.rejected || rejectLoading === p.id}
-                      >
-                        {rejectLoading === p.id ? (
-                          <Loader2 className="animate-spin w-4 h-4 mr-1 inline" />
-                        ) : null}
-                        Reject
-                      </Button>
-                      <Button
-                        size="sm"
                         variant="destructive"
                         onClick={() => handleRemove(p.id)}
                         disabled={removeLoading === p.id}
