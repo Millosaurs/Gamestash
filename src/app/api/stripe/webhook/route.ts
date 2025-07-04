@@ -26,22 +26,23 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const metadata = session.metadata || {};
-    const paymentIntentId = session.payment_intent as string | undefined;
+  if (event.type === "payment_intent.succeeded") {
+    const intent = event.data.object as Stripe.PaymentIntent;
+    const metadata = intent.metadata || {};
 
     try {
       await db.insert(productSales).values({
         productId: metadata.productId,
         buyerId: metadata.buyerId,
         sellerId: metadata.sellerId,
-        amount: ((session.amount_total ?? 0) / 100).toFixed(2),
+        amount: ((intent.amount_received ?? 0) / 100).toFixed(2),
         status: "completed",
         refunded: false,
         consentGiven: true,
-        stripePaymentIntentId: paymentIntentId,
+        stripePaymentIntentId: intent.id,
       });
+
+      return NextResponse.json({ received: true });
     } catch (err) {
       console.error("DB Insert Error:", err);
       return NextResponse.json(
