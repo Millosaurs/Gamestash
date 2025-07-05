@@ -5,9 +5,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = await context.params;
-  await db.delete(categories).where(eq(categories.id, Number(id)));
+  const id = Number(params.id);
+  await db.delete(categories).where(eq(categories.id, id));
   return NextResponse.json({ success: true });
 }
