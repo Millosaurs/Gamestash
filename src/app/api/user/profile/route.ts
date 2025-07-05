@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth"; // Your Better Auth instance
+import { auth } from "@/lib/auth";
 
 export async function GET(request: Request) {
   try {
@@ -18,6 +18,7 @@ export async function GET(request: Request) {
       .from(user)
       .where(eq(user.id, session.user.id));
     const dbUser = dbUserArr[0];
+
     if (!dbUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }

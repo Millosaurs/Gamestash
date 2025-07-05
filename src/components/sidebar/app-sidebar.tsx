@@ -175,6 +175,11 @@ export function AppSidebar({
       url: "/admin/statistics",
       icon: PieChart,
     },
+    {
+      title: "TOS",
+      url: "/admin/tos",
+      icon: LifeBuoy,
+    },
   ];
 
   // Logout handler for admin

@@ -754,8 +754,17 @@ export default function ProductPage() {
               htmlFor="consent-checkbox"
               className="cursor-pointer select-none"
             >
-              I agree to receive the digital product immediately and waive my
-              right of withdrawal.
+              By clicking "Continue", you agree to our{" "}
+              <Link
+                href="/tos"
+                className="text-blue-600 hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Terms of Service
+              </Link>
+              . You confirm that you have read and understood the product
+              description and requirements.
             </label>
           </div>
           <DialogFooter>

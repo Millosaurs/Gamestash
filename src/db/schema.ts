@@ -9,6 +9,7 @@ import {
   foreignKey,
   index,
   uuid,
+
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -347,3 +348,9 @@ export const productLikes = pgTable(
     unique("product_likes_unique").on(table.userId, table.productId),
   ]
 );
+
+export const tos = pgTable("tos", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  content: text("content").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
