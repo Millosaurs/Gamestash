@@ -49,6 +49,8 @@ import {
   Bar,
 } from "recharts";
 
+type SelectOption = { value: string; label: string };
+
 export default function ProductDetailPage() {
   const params = useParams();
   const productId = params.id as string;
@@ -57,6 +59,25 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [timeRange, setTimeRange] = useState(30);
+  const [gameOptions, setGameOptions] = useState<SelectOption[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<SelectOption[]>([]);
+  const [optionsLoading, setOptionsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchOptions() {
+      setOptionsLoading(true);
+      const [gamesRes, categoriesRes] = await Promise.all([
+        fetch("/api/admin/games"),
+        fetch("/api/admin/categories"),
+      ]);
+      const games = await gamesRes.json();
+      const categories = await categoriesRes.json();
+      setGameOptions(games);
+      setCategoryOptions(categories);
+      setOptionsLoading(false);
+    }
+    fetchOptions();
+  }, []);
 
   useEffect(() => {
     async function fetchAnalytics() {
@@ -194,6 +215,8 @@ export default function ProductDetailPage() {
                 <EditProductForm
                   productId={productId}
                   onClose={() => setEditOpen(false)}
+                  gameOptions={gameOptions}
+                  categoryOptions={categoryOptions}
                 />
               </DialogContent>
             </Dialog>
