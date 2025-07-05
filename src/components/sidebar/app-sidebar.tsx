@@ -176,9 +176,14 @@ export function AppSidebar({
       icon: PieChart,
     },
     {
-      title: "TOS",
+      title: "Tos",
       url: "/admin/tos",
       icon: LifeBuoy,
+    },
+    {
+      title: "Games",
+      url: "/admin/lables",
+      icon: Gamepad,
     },
   ];
 

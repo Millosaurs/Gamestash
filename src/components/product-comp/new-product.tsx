@@ -39,24 +39,6 @@ import { deleteS3Object } from "@/lib/actions/s3";
 import { getCloudinaryPublicId } from "@/lib/utils/cloudinary";
 import { deleteCloudinaryImageAction } from "@/lib/actions/deleteCloudinaryImage";
 
-const gameOptions = [
-  { value: "minecraft", label: "Minecraft" },
-  { value: "roblox", label: "Roblox" },
-  { value: "fivem", label: "FiveM" },
-  { value: "rust", label: "Rust" },
-  { value: "valorant", label: "Valorant" },
-  { value: "csgo", label: "CS:GO" },
-];
-
-const categoryOptions = [
-  { value: "rgb", label: "RGB" },
-  { value: "minimal", label: "Minimal" },
-  { value: "professional", label: "Professional" },
-  { value: "budget", label: "Budget" },
-  { value: "premium", label: "Premium" },
-  { value: "streaming", label: "Streaming" },
-];
-
 const ALLOWED_EXTENSIONS = [".zip", ".rar"];
 const MAX_SIZE = 100 * 1024 * 1024; // 100MB
 
@@ -313,11 +295,15 @@ const ProductPreview = ({
   tags,
   thumbnail,
   images,
+  gameOptions,
+  categoryOptions,
 }: {
   formData: any;
   tags: string[];
   thumbnail: string | null;
   images: string[];
+  gameOptions: SelectOption[];
+  categoryOptions: SelectOption[];
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const allImages = [thumbnail, ...images].filter(Boolean);
@@ -429,7 +415,17 @@ const ProductPreview = ({
   );
 };
 
-export function NewProductForm({ onClose }: { onClose?: () => void }) {
+type SelectOption = { value: string; label: string };
+
+export function NewProductForm({
+  onClose,
+  gameOptions,
+  categoryOptions,
+}: {
+  onClose?: () => void;
+  gameOptions: SelectOption[];
+  categoryOptions: SelectOption[];
+}) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -1128,6 +1124,8 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
               tags={tags}
               thumbnail={thumbnail}
               images={images}
+              gameOptions={gameOptions}
+              categoryOptions={categoryOptions}
             />
           </div>
         )}
@@ -1140,6 +1138,8 @@ export function NewProductForm({ onClose }: { onClose?: () => void }) {
               tags={tags}
               thumbnail={thumbnail}
               images={images}
+              gameOptions={gameOptions}
+              categoryOptions={categoryOptions}
             />
           </div>
         )}

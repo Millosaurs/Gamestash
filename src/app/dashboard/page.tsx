@@ -52,6 +52,8 @@ import { Product, UserStats } from "@/lib/types/product";
 import { toast } from "sonner";
 import Link from "next/link";
 
+type SelectOption = { value: string; label: string };
+
 function parseProductDates(product: any): Product {
   return {
     ...product,
@@ -79,6 +81,25 @@ export default function DashboardPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [gameOptions, setGameOptions] = useState<SelectOption[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<SelectOption[]>([]);
+  const [optionsLoading, setOptionsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchOptions() {
+      setOptionsLoading(true);
+      const [gamesRes, categoriesRes] = await Promise.all([
+        fetch("/api/admin/games"),
+        fetch("/api/admin/categories"),
+      ]);
+      const games = await gamesRes.json();
+      const categories = await categoriesRes.json();
+      setGameOptions(games);
+      setCategoryOptions(categories);
+      setOptionsLoading(false);
+    }
+    fetchOptions();
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -317,30 +338,38 @@ export default function DashboardPage() {
                         Create New Product
                       </DialogTitle>
                       <div className="flex-1 overflow-y-auto p-6">
-                        <NewProductForm
-                          onClose={() => {
-                            setOpen(false);
-                            // Refresh data after creating
-                            getUserProducts().then((result) => {
-                              if (result.success)
-                                setProducts(
-                                  (result.data || []).map(parseProductDates)
-                                );
-                            });
-                            getUserStats().then((result) => {
-                              if (result.success)
-                                setUserStats(
-                                  result.data || {
-                                    totalProducts: 0,
-                                    totalViews: 0,
-                                    totalLikes: 0,
-                                    totalSales: 0,
-                                    totalRevenue: 0,
-                                  }
-                                );
-                            });
-                          }}
-                        />
+                        {optionsLoading ? (
+                          <div className="flex justify-center items-center h-32">
+                            <Loader2 className="animate-spin w-6 h-6" />
+                          </div>
+                        ) : (
+                          <NewProductForm
+                            onClose={() => {
+                              setOpen(false);
+                              // Refresh data after creating
+                              getUserProducts().then((result) => {
+                                if (result.success)
+                                  setProducts(
+                                    (result.data || []).map(parseProductDates)
+                                  );
+                              });
+                              getUserStats().then((result) => {
+                                if (result.success)
+                                  setUserStats(
+                                    result.data || {
+                                      totalProducts: 0,
+                                      totalViews: 0,
+                                      totalLikes: 0,
+                                      totalSales: 0,
+                                      totalRevenue: 0,
+                                    }
+                                  );
+                              });
+                            }}
+                            gameOptions={gameOptions}
+                            categoryOptions={categoryOptions}
+                          />
+                        )}
                       </div>
                     </DialogContent>
                   </Dialog>
@@ -575,6 +604,8 @@ export default function DashboardPage() {
                         );
                     });
                   }}
+                  gameOptions={gameOptions}
+                  categoryOptions={categoryOptions}
                 />
               )}
             </div>

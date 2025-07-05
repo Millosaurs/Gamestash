@@ -9,7 +9,8 @@ import {
   foreignKey,
   index,
   uuid,
-
+  serial,
+  varchar,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -353,4 +354,18 @@ export const tos = pgTable("tos", {
   id: uuid("id").primaryKey().defaultRandom(),
   content: text("content").notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(),
+  value: varchar("value", { length: 64 }).notNull().unique(),
+  label: varchar("label", { length: 128 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const games = pgTable("games", {
+  id: serial("id").primaryKey(),
+  value: varchar("value", { length: 64 }).notNull().unique(),
+  label: varchar("label", { length: 128 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });

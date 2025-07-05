@@ -217,6 +217,51 @@ export default function ExplorePage() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [gameFilters, setGameFilters] = useState<
+    { id: string; name: string; count?: number }[]
+  >([]);
+  const [categoryFilters, setCategoryFilters] = useState<
+    { id: string; name: string; count?: number }[]
+  >([]);
+  const [filtersLoading, setFiltersLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchFilters() {
+      setFiltersLoading(true);
+      try {
+        // Fetch games and categories from your API
+        const [gamesRes, categoriesRes] = await Promise.all([
+          fetch("/api/admin/games"),
+          fetch("/api/admin/categories"),
+        ]);
+        const games = await gamesRes.json();
+        const categories = await categoriesRes.json();
+
+        // Optionally, fetch counts for each (if your API supports it)
+        // Here we just set count to undefined
+        setGameFilters(
+          games.map((g: any) => ({
+            id: g.value,
+            name: g.label,
+            count: undefined,
+          }))
+        );
+        setCategoryFilters(
+          categories.map((c: any) => ({
+            id: c.value,
+            name: c.label,
+            count: undefined,
+          }))
+        );
+      } catch (e) {
+        setGameFilters([]);
+        setCategoryFilters([]);
+      } finally {
+        setFiltersLoading(false);
+      }
+    }
+    fetchFilters();
+  }, []);
 
   useEffect(() => {
     async function fetchProducts() {
@@ -807,7 +852,9 @@ export default function ExplorePage() {
                           {game.name}
                         </label>
                         <span className="text-xs text-muted-foreground">
-                          {game.count.toLocaleString()}
+                          {game.count !== undefined
+                            ? game.count.toLocaleString()
+                            : ""}
                         </span>
                       </div>
                     ))}
@@ -839,7 +886,9 @@ export default function ExplorePage() {
                           {category.name}
                         </label>
                         <span className="text-xs text-muted-foreground">
-                          {category.count.toLocaleString()}
+                          {category.count !== undefined
+                            ? category.count.toLocaleString()
+                            : ""}
                         </span>
                       </div>
                     ))}
