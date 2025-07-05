@@ -5,11 +5,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } } // Destructure params directly
+  { params }: { params: { id: string } }
 ) {
   const id = Number(params.id);
 
-  // Validate ID is a number
+  // Validate ID is a valid number
   if (isNaN(id)) {
     return NextResponse.json({ error: "Invalid category ID" }, { status: 400 });
   }
