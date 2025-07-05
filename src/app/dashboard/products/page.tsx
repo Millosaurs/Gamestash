@@ -73,6 +73,8 @@ function parseProductDates(product: any): Product {
   };
 }
 
+type SelectOption = { value: string; label: string };
+
 export default function ProductsPage() {
   const { data: session, isPending } = useSession();
   const [products, setProducts] = useState<Product[]>([]);
@@ -85,6 +87,25 @@ export default function ProductsPage() {
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editProductId, setEditProductId] = useState<string | null>(null);
+  const [gameOptions, setGameOptions] = useState<SelectOption[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<SelectOption[]>([]);
+  const [optionsLoading, setOptionsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchOptions() {
+      setOptionsLoading(true);
+      const [gamesRes, categoriesRes] = await Promise.all([
+        fetch("/api/admin/games"),
+        fetch("/api/admin/categories"),
+      ]);
+      const games = await gamesRes.json();
+      const categories = await categoriesRes.json();
+      setGameOptions(games);
+      setCategoryOptions(categories);
+      setOptionsLoading(false);
+    }
+    fetchOptions();
+  }, []);
 
   useEffect(() => {
     async function fetchProducts() {
@@ -244,6 +265,8 @@ export default function ProductsPage() {
                         setOpen(false);
                         refreshProducts();
                       }}
+                      gameOptions={gameOptions}
+                      categoryOptions={categoryOptions}
                     />
                   </div>
                 </DialogContent>
@@ -644,6 +667,8 @@ export default function ProductsPage() {
                     setEditOpen(false);
                     refreshProducts();
                   }}
+                  gameOptions={gameOptions}
+                  categoryOptions={categoryOptions}
                 />
               )}
             </div>
