@@ -5,10 +5,22 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(
   req: NextRequest,
-  context: Promise<{ params: { id: string } }>
+  { params }: { params: { id: string } } // Destructure params directly
 ) {
-  const { params } = await context;
   const id = Number(params.id);
-  await db.delete(categories).where(eq(categories.id, id));
-  return NextResponse.json({ success: true });
+
+  // Validate ID is a number
+  if (isNaN(id)) {
+    return NextResponse.json({ error: "Invalid category ID" }, { status: 400 });
+  }
+
+  try {
+    await db.delete(categories).where(eq(categories.id, id));
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to delete category" },
+      { status: 500 }
+    );
+  }
 }
