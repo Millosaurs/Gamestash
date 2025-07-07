@@ -369,3 +369,10 @@ export const games = pgTable("games", {
   label: varchar("label", { length: 128 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const specialties = pgTable("specialties", {
+  id: serial("id").primaryKey(),
+  value: varchar("value", { length: 64 }).notNull().unique(),
+  label: varchar("label", { length: 128 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});

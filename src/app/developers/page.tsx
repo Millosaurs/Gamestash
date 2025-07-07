@@ -40,7 +40,32 @@ export default function DevelopersPage() {
   const [sortBy, setSortBy] = useState("featured");
   const [viewMode, setViewMode] = useState("grid");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
+  const [specialtyFilters, setSpecialtyFilters] = useState<
+    { id: string; name: string; count?: number }[]
+  >([]);
+  const [filtersLoading, setFiltersLoading] = useState(true);
   const router = useRouter();
+  useEffect(() => {
+    async function fetchSpecialties() {
+      setFiltersLoading(true);
+      try {
+        const res = await fetch("/api/admin/specialties");
+        const specialties = await res.json();
+        setSpecialtyFilters(
+          specialties.map((s: any) => ({
+            id: s.value, // or s.id, depending on your API
+            name: s.label, // or s.name
+            count: s.count, // optional
+          }))
+        );
+      } catch (e) {
+        setSpecialtyFilters([]);
+      } finally {
+        setFiltersLoading(false);
+      }
+    }
+    fetchSpecialties();
+  }, []);
 
   useEffect(() => {
     async function fetchDevelopers() {
@@ -249,6 +274,7 @@ export default function DevelopersPage() {
               <Select
                 value={selectedSpecialty}
                 onValueChange={setSelectedSpecialty}
+                disabled={filtersLoading}
               >
                 <SelectTrigger className="w-48 bg-background/50 backdrop-blur-sm border-border/50">
                   <Filter className="h-4 w-4 mr-2" />
@@ -256,16 +282,16 @@ export default function DevelopersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Specialties</SelectItem>
-                  {allSpecialties
-                    .filter(
-                      (specialty) =>
-                        typeof specialty === "string" && specialty.trim() !== ""
-                    )
-                    .map((specialty) => (
-                      <SelectItem key={specialty} value={specialty}>
-                        {specialty}
-                      </SelectItem>
-                    ))}
+                  {specialtyFilters.map((specialty) => (
+                    <SelectItem key={specialty.id} value={specialty.name}>
+                      {specialty.name}
+                      {specialty.count !== undefined && (
+                        <span className="ml-2 text-muted-foreground">
+                          ({specialty.count})
+                        </span>
+                      )}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 

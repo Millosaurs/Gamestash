@@ -66,16 +66,16 @@ function AdminListManager({
       <CardContent>
         <div className="flex gap-2 mb-4">
           <Input
-            placeholder="Value (e.g. minecraft)"
+            placeholder="Lable (e.g. game/specialtie/category)"
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            className="w-1/3"
+            className="w-full"
           />
           <Input
-            placeholder="Label (e.g. Minecraft)"
+            placeholder="Name (e.g. Minecraft/Webdev/Design)"
             value={label}
             onChange={(e) => setLabel(e.target.value)}
-            className="w-1/3"
+            className="w-full"
           />
           <Button onClick={handleAdd} disabled={loading || !value || !label}>
             Add
@@ -115,6 +115,7 @@ export default function GameCategoryManagerPage() {
       <h1 className="text-2xl font-bold mb-8">Manage Games & Categories</h1>
       <AdminListManager title="Games" apiPath="/api/admin/games" />
       <AdminListManager title="Categories" apiPath="/api/admin/categories" />
+      <AdminListManager title="Specialties" apiPath="/api/admin/specialties" />
     </div>
   );
 }

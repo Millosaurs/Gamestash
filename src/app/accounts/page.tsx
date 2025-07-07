@@ -17,7 +17,15 @@ import {
   Edit,
   Trash2,
   Eye,
+  X,
 } from "lucide-react";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -56,6 +64,49 @@ export default function AccountsPage() {
 
   // Add state for profile
   const [profile, setProfile] = useState<any>(null);
+  const [specialtyOptions, setSpecialtyOptions] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [specialtiesLoading, setSpecialtiesLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchSpecialties() {
+      setSpecialtiesLoading(true);
+      try {
+        const res = await fetch("/api/admin/specialties");
+        const data = await res.json();
+        setSpecialtyOptions(
+          data.map((s: any) => ({
+            id: s.value ?? s.id,
+            name: s.label ?? s.name,
+          }))
+        );
+      } catch (e) {
+        setSpecialtyOptions([]);
+      } finally {
+        setSpecialtiesLoading(false);
+      }
+    }
+    fetchSpecialties();
+  }, []);
+
+  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>(
+    Array.isArray(profile?.specialties)
+      ? profile.specialties
+      : profile?.specialties
+      ? [profile.specialties]
+      : []
+  );
+
+  useEffect(() => {
+    setSelectedSpecialties(
+      Array.isArray(profile?.specialties)
+        ? profile.specialties
+        : profile?.specialties
+        ? [profile.specialties]
+        : []
+    );
+  }, [profile]);
 
   useEffect(() => {
     async function fetchUserData() {
@@ -328,15 +379,63 @@ export default function AccountsPage() {
                             </div>
                             <div>
                               <Label htmlFor="specialties">Specialties</Label>
-                              <Input
-                                id="specialties"
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                {selectedSpecialties.map((spec) => (
+                                  <Badge
+                                    key={spec}
+                                    className="flex items-center gap-1 mt-2"
+                                    variant="secondary"
+                                  >
+                                    {spec}
+                                    <button
+                                      type="button"
+                                      className="ml-1"
+                                      onClick={() =>
+                                        setSelectedSpecialties((prev) =>
+                                          prev.filter((s) => s !== spec)
+                                        )
+                                      }
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </Badge>
+                                ))}
+                              </div>
+                              <Select
+                                value=""
+                                onValueChange={(value) => {
+                                  if (
+                                    value &&
+                                    !selectedSpecialties.includes(value)
+                                  ) {
+                                    setSelectedSpecialties((prev) => [
+                                      ...prev,
+                                      value,
+                                    ]);
+                                  }
+                                }}
+                                disabled={specialtiesLoading}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select specialties" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {specialtyOptions
+                                    .filter(
+                                      (s) =>
+                                        !selectedSpecialties.includes(s.name)
+                                    )
+                                    .map((s) => (
+                                      <SelectItem key={s.id} value={s.name}>
+                                        {s.name}
+                                      </SelectItem>
+                                    ))}
+                                </SelectContent>
+                              </Select>
+                              <input
+                                type="hidden"
                                 name="specialties"
-                                defaultValue={
-                                  Array.isArray(profile?.specialties)
-                                    ? profile.specialties.join(", ")
-                                    : profile?.specialties || ""
-                                }
-                                placeholder="RGB, Gaming, Minimal (comma-separated)"
+                                value={selectedSpecialties.join(",")}
                               />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

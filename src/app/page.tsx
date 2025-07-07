@@ -69,24 +69,6 @@ const gameCategories = [
     count: "1.9k setups",
     gradient: "from-purple-500/80 to-pink-500/80",
   },
-  {
-    name: "Rust",
-    img: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=500&h=300&fit=crop&q=80",
-    count: "1.5k setups",
-    gradient: "from-orange-500/80 to-red-500/80",
-  },
-  {
-    name: "CS2",
-    img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=500&h=300&fit=crop&q=80",
-    count: "1.2k setups",
-    gradient: "from-blue-500/80 to-purple-500/80",
-  },
-  {
-    name: "Valorant",
-    img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=500&h=300&fit=crop&q=80",
-    count: "950 setups",
-    gradient: "from-pink-500/80 to-red-500/80",
-  },
 ];
 
 export default function LandingPage() {
@@ -157,10 +139,6 @@ export default function LandingPage() {
     }
   };
 
-  // --- HERO & STATS ---
-  // Calculate stats for hero section (if you want dynamic, fetch and sum like in /explore)
-  // For now, use the static stats array for display
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 font-sans flex flex-col">
       <Header />
@@ -207,45 +185,6 @@ export default function LandingPage() {
               Search
             </Button>
           </form>
-          <div className="mt-2 flex flex-wrap justify-center gap-3">
-            <Badge variant="secondary" className="bg-muted/50">
-              No sign up required
-            </Badge>
-            <Badge variant="secondary" className="bg-muted/50">
-              100% Secure Payments
-            </Badge>
-            <Badge variant="secondary" className="bg-muted/50">
-              Trusted by 8,000+ gamers
-            </Badge>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Bar */}
-      <section className="w-full py-8 bg-background/60 border-b border-border/40 flex flex-col items-center">
-        <div className="mx-auto w-full max-w-5xl px-4 flex flex-col items-center">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 w-full justify-center text-center">
-            {stats.map((stat, index) => (
-              <div
-                key={index}
-                className="bg-background/60 backdrop-blur-sm rounded-2xl p-6 border border-border/50 hover:bg-background/80 transition-all duration-300 flex flex-col items-center gap-2 shadow-sm"
-              >
-                <div
-                  className={`p-3 rounded-full ${stat.color} bg-muted/80 mb-2`}
-                >
-                  <stat.icon className="h-6 w-6" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-foreground">
-                    {stat.value}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {stat.label}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -266,7 +205,7 @@ export default function LandingPage() {
               Explore All &rarr;
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 w-full justify-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 w-full justify-center">
             {gameCategories.map((cat) => (
               <Link
                 key={cat.name}
@@ -416,16 +355,10 @@ export default function LandingPage() {
             the perfect gaming configurations trusted by thousands of players
             worldwide.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-6 text-sm text-muted-foreground">
-            <Badge variant="secondary" className="bg-muted/50">
-              Built with Next.js
-            </Badge>
-            <Badge variant="secondary" className="bg-muted/50">
-              Tailwind CSS
-            </Badge>
-            <Badge variant="secondary" className="bg-muted/50">
-              shadcn/ui
-            </Badge>
+          <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
+            By clicking continue, you agree to our{" "}
+            <a href="/tos">Terms of Service</a> and{" "}
+            <a href="#">Privacy Policy</a>.
           </div>
           <div className="mt-8 text-xs text-muted-foreground text-center">
             &copy; {new Date().getFullYear()} Gamestash. All rights reserved.
