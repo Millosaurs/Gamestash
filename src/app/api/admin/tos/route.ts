@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
   const { id, content } = await req.json();
   if (!id || !content)
-    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    return NextResponse.json({ error: "Missing fields " }, { status: 400 });
 
   await db
     .update(tos)
@@ -21,3 +21,4 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ success: true });
 }
+
