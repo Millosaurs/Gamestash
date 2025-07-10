@@ -17,8 +17,6 @@ export default async function AdminTosPage() {
 
   return (
     <div className="min-h-screen bg-background font-sans antialiased flex flex-col">
-      <Header />
-
       <main className="flex-1 py-12">
         <section className="max-w-2xl mx-auto mb-6">
           <Card>

@@ -646,7 +646,7 @@ export default function AccountsPage() {
               )}
 
               {activeTab === "settings" && (
-                <div>
+                <div className="space-y-6">
                   <Card>
                     <CardHeader>
                       <CardTitle>Account Settings</CardTitle>
