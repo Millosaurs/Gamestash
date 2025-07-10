@@ -1,4 +1,3 @@
-// app/accounts/page.tsx
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -7,13 +6,6 @@ import {
   Heart,
   ShoppingBag,
   Settings,
-  Bell,
-  Shield,
-  CreditCard,
-  MapPin,
-  Phone,
-  Mail,
-  Calendar,
   Edit,
   Trash2,
   Eye,
@@ -34,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { useSession } from "@/lib/auth-client";
+import { useSession, signOut } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Header from "@/components/header";
 import Link from "next/link";
@@ -62,12 +54,16 @@ export default function AccountsPage() {
     profileVisibility: "public",
   });
 
-  // Add state for profile
+  // Profile state
   const [profile, setProfile] = useState<any>(null);
   const [specialtyOptions, setSpecialtyOptions] = useState<
     { id: string; name: string }[]
   >([]);
   const [specialtiesLoading, setSpecialtiesLoading] = useState(true);
+
+  // Account deletion state
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteConfirmationInput, setDeleteConfirmationInput] = useState("");
 
   useEffect(() => {
     async function fetchSpecialties() {
@@ -90,13 +86,7 @@ export default function AccountsPage() {
     fetchSpecialties();
   }, []);
 
-  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>(
-    Array.isArray(profile?.specialties)
-      ? profile.specialties
-      : profile?.specialties
-      ? [profile.specialties]
-      : []
-  );
+  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
 
   useEffect(() => {
     setSelectedSpecialties(
@@ -111,27 +101,19 @@ export default function AccountsPage() {
   useEffect(() => {
     async function fetchUserData() {
       if (!session?.user) return;
-
       setLoading(true);
       try {
-        // Fetch user profile
-        const profileRes = await fetch("/api/user/profile");
-        if (profileRes.ok) {
-          const profileData = await profileRes.json();
-          setProfile(profileData);
-        }
-        // Fetch liked products
-        const likedResponse = await fetch("/api/user/liked-products");
-        if (likedResponse.ok) {
-          const likedData = await likedResponse.json();
-          setLikedProducts(likedData);
-        }
-        // Fetch purchased products
-        const purchasedResponse = await fetch("/api/user/purchased-products");
-        if (purchasedResponse.ok) {
-          const purchasedData = await purchasedResponse.json();
-          setPurchasedProducts(purchasedData);
-        }
+        const [profileRes, likedResponse, purchasedResponse] =
+          await Promise.all([
+            fetch("/api/user/profile"),
+            fetch("/api/user/liked-products"),
+            fetch("/api/user/purchased-products"),
+          ]);
+
+        if (profileRes.ok) setProfile(await profileRes.json());
+        if (likedResponse.ok) setLikedProducts(await likedResponse.json());
+        if (purchasedResponse.ok)
+          setPurchasedProducts(await purchasedResponse.json());
       } catch (error) {
         console.error("Error fetching user data:", error);
         toast.error("Failed to load account data");
@@ -148,9 +130,10 @@ export default function AccountsPage() {
         method: "PUT",
         body: formData,
       });
-
       if (response.ok) {
         toast.success("Profile updated successfully");
+        setProfile(await response.json()); // Refresh profile data
+        setEditMode(false);
       } else {
         toast.error("Failed to update profile");
       }
@@ -164,12 +147,9 @@ export default function AccountsPage() {
     try {
       const response = await fetch("/api/user/settings", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userSettings),
       });
-
       if (response.ok) {
         toast.success("Settings updated successfully");
       } else {
@@ -178,6 +158,33 @@ export default function AccountsPage() {
     } catch (error) {
       console.error("Error updating settings:", error);
       toast.error("Failed to update settings");
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmationInput !== "DELETE") {
+      toast.error('Please type "DELETE" to confirm.');
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/user/delete-account", {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        toast.success("Your account has been permanently deleted.");
+        await signOut();
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || "Failed to delete your account.");
+      }
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      toast.error("An unexpected error occurred while deleting your account.");
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setDeleteConfirmationInput("");
     }
   };
 
@@ -639,96 +646,168 @@ export default function AccountsPage() {
               )}
 
               {activeTab === "settings" && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Account Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div>
-                      <h4 className="font-medium mb-4">Notifications</h4>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label>Email Notifications</Label>
-                            <p className="text-sm text-muted-foreground">
-                              Receive updates about your account via email
-                            </p>
-                          </div>
-                          <Switch
-                            checked={userSettings.emailNotifications}
-                            onCheckedChange={(checked) =>
-                              setUserSettings((prev) => ({
-                                ...prev,
-                                emailNotifications: checked,
-                              }))
-                            }
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label>Push Notifications</Label>
-                            <p className="text-sm text-muted-foreground">
-                              Receive push notifications in your browser
-                            </p>
-                          </div>
-                          <Switch
-                            checked={userSettings.pushNotifications}
-                            onCheckedChange={(checked) =>
-                              setUserSettings((prev) => ({
-                                ...prev,
-                                pushNotifications: checked,
-                              }))
-                            }
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label>Marketing Emails</Label>
-                            <p className="text-sm text-muted-foreground">
-                              Receive promotional emails and updates
-                            </p>
-                          </div>
-                          <Switch
-                            checked={userSettings.marketingEmails}
-                            onCheckedChange={(checked) =>
-                              setUserSettings((prev) => ({
-                                ...prev,
-                                marketingEmails: checked,
-                              }))
-                            }
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="font-medium mb-4">Privacy</h4>
+                <div>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Account Settings</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
                       <div>
-                        <Label>Profile Visibility</Label>
-                        <select
-                          className="w-full mt-1 p-2 border rounded-md"
-                          value={userSettings.profileVisibility}
-                          onChange={(e) =>
-                            setUserSettings((prev) => ({
-                              ...prev,
-                              profileVisibility: e.target.value,
-                            }))
-                          }
-                        >
-                          <option value="public">Public</option>
-                          <option value="private">Private</option>
-                        </select>
+                        <h4 className="font-medium mb-4">Notifications</h4>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Label>Email Notifications</Label>
+                              <p className="text-sm text-muted-foreground">
+                                Receive updates about your account via email
+                              </p>
+                            </div>
+                            <Switch
+                              checked={userSettings.emailNotifications}
+                              onCheckedChange={(checked) =>
+                                setUserSettings((prev) => ({
+                                  ...prev,
+                                  emailNotifications: checked,
+                                }))
+                              }
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Label>Push Notifications</Label>
+                              <p className="text-sm text-muted-foreground">
+                                Receive push notifications in your browser
+                              </p>
+                            </div>
+                            <Switch
+                              checked={userSettings.pushNotifications}
+                              onCheckedChange={(checked) =>
+                                setUserSettings((prev) => ({
+                                  ...prev,
+                                  pushNotifications: checked,
+                                }))
+                              }
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Label>Marketing Emails</Label>
+                              <p className="text-sm text-muted-foreground">
+                                Receive promotional emails and updates
+                              </p>
+                            </div>
+                            <Switch
+                              checked={userSettings.marketingEmails}
+                              onCheckedChange={(checked) =>
+                                setUserSettings((prev) => ({
+                                  ...prev,
+                                  marketingEmails: checked,
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
                       </div>
-                    </div>
 
-                    <Button onClick={handleUpdateSettings}>
-                      Save Settings
-                    </Button>
-                  </CardContent>
-                </Card>
+                      <div>
+                        <h4 className="font-medium mb-4">Privacy</h4>
+                        <div>
+                          <Label>Profile Visibility</Label>
+                          <select
+                            className="w-full mt-1 p-2 border rounded-md"
+                            value={userSettings.profileVisibility}
+                            onChange={(e) =>
+                              setUserSettings((prev) => ({
+                                ...prev,
+                                profileVisibility: e.target.value,
+                              }))
+                            }
+                          >
+                            <option value="public">Public</option>
+                            <option value="private">Private</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <Button onClick={handleUpdateSettings}>
+                        Save Settings
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-destructive">
+                    <CardHeader>
+                      <CardTitle className="text-destructive">
+                        Danger Zone
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                        <div className="mb-4 sm:mb-0">
+                          <h4 className="font-semibold">Delete Account</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Permanently delete your account and all associated
+                            data. This action is irreversible.
+                          </p>
+                        </div>
+                        <Button
+                          variant="destructive"
+                          onClick={() => setIsDeleteDialogOpen(true)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete My Account
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               )}
             </div>
           </div>
+          <Dialog
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Are you absolutely sure?</DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <p className="text-muted-foreground">
+                  This action cannot be undone. This will permanently delete
+                  your account, profile, purchases, and remove all of your data
+                  from our servers.
+                </p>
+                <Label htmlFor="delete-confirm" className="mt-4 block">
+                  Please type{" "}
+                  <strong className="text-destructive">DELETE</strong> into the
+                  box below to confirm.
+                </Label>
+                <Input
+                  id="delete-confirm"
+                  value={deleteConfirmationInput}
+                  onChange={(e) => setDeleteConfirmationInput(e.target.value)}
+                  className="mt-2"
+                  placeholder="DELETE"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={() => setIsDeleteDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmationInput !== "DELETE"}
+                >
+                  I understand, delete my account
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </>
