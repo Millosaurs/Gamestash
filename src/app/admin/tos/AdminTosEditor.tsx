@@ -1,3 +1,5 @@
+// /src/app/admin/tos/AdminTosEditor.tsx
+
 "use client";
 
 import { useState } from "react";

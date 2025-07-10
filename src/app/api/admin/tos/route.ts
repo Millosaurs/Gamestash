@@ -1,5 +1,7 @@
 // app/api/admin/tos/route.ts
 import { NextRequest, NextResponse } from "next/server";
+// 1. Import the revalidation functions
+import { revalidatePath, revalidateTag } from "next/cache";
 import { db } from "@/db";
 import { tos } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -19,6 +21,8 @@ export async function POST(req: NextRequest) {
     .set({ content, updatedAt: new Date() })
     .where(eq(tos.id, id));
 
-  return NextResponse.json({ success: true });
-}
+  revalidatePath("/admin/tos");
+  revalidateTag("tos");
 
+  return NextResponse.json({ success: true, revalidated: true });
+}

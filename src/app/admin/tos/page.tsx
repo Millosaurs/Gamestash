@@ -1,3 +1,5 @@
+//src/app/admin/tos/page.tsx
+
 import { db } from "@/db";
 import { tos } from "@/db/schema";
 import { desc } from "drizzle-orm";

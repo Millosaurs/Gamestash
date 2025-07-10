@@ -1,10 +1,13 @@
+// src/app/tos/page.tsx
+
 import { db } from "@/db";
 import { tos } from "@/db/schema";
 import { desc } from "drizzle-orm";
 import Header from "@/components/header";
+import { unstable_cache } from "next/cache";
 
-// Custom markup parser: **bold**, __underline__, !!italic!!
 function parseCustomMarkup(text: string): string {
+  if (!text) return "";
   return text
     .replace(/__([^_]+)__/g, "<u>$1</u>")
     .replace(/\*\*([^\*]+)\*\*/g, "<strong>$1</strong>")
@@ -12,23 +15,35 @@ function parseCustomMarkup(text: string): string {
 }
 
 function extractClauses(html: string): string[] {
+  if (!html) return [];
   const matches = html.match(/<li[^>]*>[\s\S]*?<\/li>/g);
   if (matches) {
     return matches.map((clause) => clause.replace(/<\/?li[^>]*>/g, "").trim());
   }
+
   return [html];
 }
 
-export default async function TosPage() {
-  const [tosRow] = await db
-    .select()
-    .from(tos)
-    .orderBy(desc(tos.updatedAt))
-    .limit(1);
+const getLatestTos = unstable_cache(
+  async () => {
+    console.log("Fetching fresh ToS from DB for public page...");
+    const [tosRow] = await db
+      .select()
+      .from(tos)
+      .orderBy(desc(tos.updatedAt))
+      .limit(1);
+    return tosRow;
+  },
+  ["tos-data"],
+  {
+    tags: ["tos"],
+  }
+);
 
-  const clauses = tosRow?.content
-    ? extractClauses(tosRow.content)
-    : ["No Terms of Service found."];
+export default async function TosPage() {
+  const tosData = await getLatestTos();
+
+  const clauses = extractClauses(tosData?.content || "");
 
   return (
     <div className="min-h-screen bg-background font-sans antialiased flex flex-col">
@@ -39,17 +54,23 @@ export default async function TosPage() {
             Terms of Service
           </h1>
           <ul className="space-y-2">
-            {clauses.map((clause, idx) => (
-              <li key={idx}>
-                <div
-                  className="border-l-4 border-primary bg-muted/60 px-3 py-1 text-sm text-foreground leading-snug"
-                  style={{ wordBreak: "break-word" }}
-                  dangerouslySetInnerHTML={{
-                    __html: parseCustomMarkup(clause),
-                  }}
-                />
-              </li>
-            ))}
+            {clauses.length > 0 ? (
+              clauses.map((clause, idx) => (
+                <li key={idx}>
+                  <div
+                    className="border-l-4 border-primary bg-muted/60 px-3 py-1 text-sm text-foreground leading-snug"
+                    style={{ wordBreak: "break-word" }}
+                    dangerouslySetInnerHTML={{
+                      __html: parseCustomMarkup(clause),
+                    }}
+                  />
+                </li>
+              ))
+            ) : (
+              <p className="text-muted-foreground text-center">
+                The Terms of Service have not been defined yet.
+              </p>
+            )}
           </ul>
         </section>
       </main>
