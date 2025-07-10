@@ -54,19 +54,16 @@ const gameCategories = [
   {
     name: "Minecraft",
     img: "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?w=500&h=300&fit=crop&q=80",
-    count: "3.2k setups",
     gradient: "from-green-500/80 to-blue-500/80",
   },
   {
     name: "Roblox",
     img: "https://images.unsplash.com/photo-1614294149010-950b698f72c0?w=500&h=300&fit=crop&q=80",
-    count: "2.8k setups",
     gradient: "from-red-500/80 to-yellow-500/80",
   },
   {
     name: "FiveM",
     img: "https://images.unsplash.com/photo-1542751110-97427bbecf20?w=500&h=300&fit=crop&q=80",
-    count: "1.9k setups",
     gradient: "from-purple-500/80 to-pink-500/80",
   },
 ];
@@ -230,9 +227,6 @@ export default function LandingPage() {
                 <div className="absolute inset-0 flex flex-col justify-end p-3 z-10">
                   <span className="text-white font-bold text-sm mb-1 drop-shadow-lg">
                     {cat.name}
-                  </span>
-                  <span className="text-white/90 text-xs drop-shadow">
-                    {cat.count}
                   </span>
                 </div>
               </Link>
