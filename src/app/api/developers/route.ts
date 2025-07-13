@@ -6,14 +6,6 @@ import { auth } from "@/lib/auth"; // Your Better Auth instance
 
 export async function GET(request: Request) {
   try {
-    // Get session using Better Auth
-    const session = await auth.api.getSession({ headers: request.headers });
-
-    //  want to restrict to authenticated users:
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
     // Get developers with their recent products
     const developers = await db
       .select({
