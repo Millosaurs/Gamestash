@@ -309,14 +309,12 @@ function SellerCard({ product }: { product: any }) {
         </div>
         <Separator className="my-4" />
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="flex-1">
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Contact Seller
-          </Button>
-          <Button variant="outline" size="sm" className="flex-1">
-            <User className="w-4 h-4 mr-2" />
-            View Profile
-          </Button>
+          <Link href={`/developers/${product.userId})`}>
+            <Button variant="outline" size="sm" className="flex-1">
+              <User className="w-4 h-4 mr-2" />
+              View Profile
+            </Button>
+          </Link>
         </div>
       </CardContent>
     </Card>
@@ -672,7 +670,7 @@ export default function ProductPage() {
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span>24/7 customer support</span>
+                        <span>Customer support</span>
                       </div>
                     </div>
                   </CardContent>

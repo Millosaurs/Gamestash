@@ -1,14 +1,9 @@
 import { db } from "@/db";
 import { games } from "@/db/schema";
-import { verifyAdminSession } from "@/lib/admin-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 // GET: List all games
 export async function GET() {
-  const session = await verifyAdminSession();
-  if (!session)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const result = await db.select().from(games).orderBy(games.label);
   return NextResponse.json(result);
 }

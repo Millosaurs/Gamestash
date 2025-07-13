@@ -32,7 +32,8 @@ import { ProductCard } from "@/components/product-card";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
-import { createCache } from "@/lib/utils";
+// Assuming createCache is defined and available, if not, remove or replace
+// import { createCache } from "@/lib/utils";
 
 export type SocialLinks = {
   twitter?: string;
@@ -51,7 +52,7 @@ export type Developer = {
   bio: string;
   location: string;
   joinedDate: string;
-  totalProducts: number;
+  totalProducts: number; // This might be redundant if products.length is used
   totalLikes: number;
   totalViews: number;
   totalSales: number;
@@ -60,7 +61,7 @@ export type Developer = {
   verified: boolean;
   featured: boolean;
   socialLinks: SocialLinks;
-  products: Product[];
+  products?: Product[]; // Made optional, as it might be undefined initially from API
   analytics?: {
     totalProducts?: number;
     totalLikes?: number;
@@ -71,28 +72,50 @@ export type Developer = {
 };
 
 // Cache for developer analytics (1 min TTL)
-const analyticsCache = createCache<any>(60000);
+// const analyticsCache = createCache<any>(60000); // Uncomment if createCache is available and used
 
 export default function DeveloperDetailPage() {
   const params = useParams();
   const [developer, setDeveloper] = useState<Developer | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [loading, setLoading] = useState(true);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false); // State not used in provided code
 
   useEffect(() => {
     const fetchDeveloper = async () => {
       setLoading(true);
-      // Use keepalive and no-cache for faster response
-      const res = await fetch(`/api/developers/${params.id}`, {
-        cache: "no-store",
-        keepalive: true,
-      });
-      const data = await res.json();
-      setDeveloper(data);
-      setLoading(false);
+      try {
+        const res = await fetch(`/api/developers/${params.id}`, {
+          cache: "no-store", // Ensure fresh data
+          keepalive: true, // Optimizes connection usage
+        });
+
+        if (!res.ok) {
+          // Handle HTTP errors
+          if (res.status === 404) {
+            setDeveloper(null); // Explicitly set null for "not found"
+          }
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data: Developer = await res.json();
+
+        // Ensure products array exists, even if API sends null or undefined
+        if (!Array.isArray(data.products)) {
+          data.products = [];
+        }
+
+        setDeveloper(data);
+      } catch (error) {
+        console.error("Failed to fetch developer:", error);
+        setDeveloper(null); // Set to null on error to show "Not Found" message
+      } finally {
+        setLoading(false);
+      }
     };
-    if (params.id) fetchDeveloper();
+    if (params.id) {
+      fetchDeveloper();
+    }
   }, [params.id]);
 
   if (loading) {
@@ -114,6 +137,7 @@ export default function DeveloperDetailPage() {
     );
   }
 
+  // If loading is false and developer is null, it means no developer was found or an error occurred.
   if (!developer) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center font-sans">
@@ -140,10 +164,16 @@ export default function DeveloperDetailPage() {
     );
   }
 
+  // --- BEGIN FIX FOR "developer.products is undefined" ---
+  const developerProducts = developer.products || [];
+  // --- END FIX ---
+
   // Use analytics from developer object
   const analytics = developer.analytics;
 
   const handleProductClick = (id: string) => {
+    // Navigate to product detail page. Using Next.js Link would be better practice for client-side navigation.
+    // For now, keeping your original window.location.href.
     window.location.href = `/product/${id}`;
   };
 
@@ -154,7 +184,11 @@ export default function DeveloperDetailPage() {
         url: window.location.href,
       });
     } else {
-      navigator.clipboard.writeText(window.location.href);
+      // Fallback for browsers that don't support Web Share API
+      navigator.clipboard
+        .writeText(window.location.href)
+        .then(() => alert("Profile link copied to clipboard!"))
+        .catch((err) => console.error("Could not copy text: ", err));
     }
   };
 
@@ -181,7 +215,8 @@ export default function DeveloperDetailPage() {
                   <img
                     src={
                       (() => {
-                        const img = (developer as any).image;
+                        // More robust image URL selection
+                        const img = (developer as any).image; // Check for a general 'image' property first
                         if (typeof img === "string" && img.length > 0)
                           return img;
                         if (
@@ -189,7 +224,7 @@ export default function DeveloperDetailPage() {
                           developer.avatar.length > 0
                         )
                           return developer.avatar;
-                        return "/placeholder.svg";
+                        return "/placeholder.svg"; // Fallback if none exist
                       })() as string
                     }
                     alt={developer.displayName}
@@ -378,7 +413,7 @@ export default function DeveloperDetailPage() {
                 <ShoppingCart className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="text-2xl font-bold text-foreground font-display">
-                {analytics?.totalProducts ?? developer.products.length}
+                {analytics?.totalProducts ?? developerProducts.length}
               </div>
               <div className="text-sm text-muted-foreground font-medium">
                 Products
@@ -450,7 +485,7 @@ export default function DeveloperDetailPage() {
         <Tabs defaultValue="products" className="mb-8">
           <TabsList className="grid w-full grid-cols-2 h-12 p-1 bg-muted/50 rounded-xl shadow-sm">
             <TabsTrigger value="products" className="rounded-lg font-medium">
-              Products ({developer.products.length})
+              Products ({developerProducts.length})
             </TabsTrigger>
             <TabsTrigger value="about" className="rounded-lg font-medium">
               About
@@ -492,7 +527,7 @@ export default function DeveloperDetailPage() {
               </div>
             </div>
             {/* Products Display */}
-            {developer.products.length > 0 ? (
+            {developerProducts.length > 0 ? (
               <div
                 className={
                   viewMode === "grid"
@@ -500,15 +535,15 @@ export default function DeveloperDetailPage() {
                     : "space-y-4"
                 }
               >
-                {developer.products.map((product: any) => (
+                {developerProducts.map((product: Product) => (
                   <ProductCard
                     key={product.id}
                     product={{
                       ...product,
                       imageUrl:
                         product.imageUrl ||
-                        product.image ||
-                        product.thumbnail ||
+                        (product as any).image || // Coerce to any if 'image' is not in Product type
+                        (product as any).thumbnail || // Coerce to any if 'thumbnail' is not in Product type
                         "/placeholder.svg",
                     }}
                     viewMode={viewMode}

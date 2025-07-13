@@ -460,6 +460,10 @@ export function NewProductForm({
   const [productFileKey, setProductFileKey] = useState<string | null>(null);
   const [removingThumbnail, setRemovingThumbnail] = useState(false);
   const [removingImageIdx, setRemovingImageIdx] = useState<number | null>(null);
+  const safeGameOptions = Array.isArray(gameOptions) ? gameOptions : [];
+  const safeCategoryOptions = Array.isArray(categoryOptions)
+    ? categoryOptions
+    : [];
 
   function isValidYouTubeUrl(url: string) {
     return /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}(&.*)?$/.test(
@@ -865,7 +869,7 @@ export function NewProductForm({
                       <SelectValue placeholder="Select game" />
                     </SelectTrigger>
                     <SelectContent>
-                      {gameOptions.map((option) => (
+                      {safeGameOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
@@ -886,7 +890,7 @@ export function NewProductForm({
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categoryOptions.map((option) => (
+                      {safeCategoryOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
