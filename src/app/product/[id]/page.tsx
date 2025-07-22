@@ -308,9 +308,9 @@ function SellerCard({ product }: { product: any }) {
           </div>
         </div>
         <Separator className="my-4" />
-        <div className="flex gap-2">
-          <Link href={`/developers/${product.userId})`}>
-            <Button variant="outline" size="sm" className="flex-1">
+        <div className=" gap-2 ">
+          <Link href={`/developers/${product.userId}`}>
+            <Button variant="outline" size="sm" className="flex-1 w-full">
               <User className="w-4 h-4 mr-2" />
               View Profile
             </Button>

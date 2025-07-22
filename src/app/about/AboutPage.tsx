@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/header";
 import Image from "next/image";
+import Link from "next/link";
 
 const stats = [
   {
@@ -25,34 +26,6 @@ const stats = [
     label: "Discord Members",
     description:
       "Join our thriving community of gaming enthusiasts and setup creators",
-  },
-];
-
-const trustedPartners = [
-  {
-    name: "Razer",
-    logo: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&h=60&fit=crop&q=80",
-    description: "Gaming peripherals",
-  },
-  {
-    name: "Corsair",
-    logo: "https://images.unsplash.com/photo-1547394765-185e1e68f34e?w=120&h=60&fit=crop&q=80",
-    description: "PC components",
-  },
-  {
-    name: "SteelSeries",
-    logo: "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=120&h=60&fit=crop&q=80",
-    description: "Gaming gear",
-  },
-  {
-    name: "NZXT",
-    logo: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=120&h=60&fit=crop&q=80",
-    description: "PC cases & cooling",
-  },
-  {
-    name: "HyperX",
-    logo: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=120&h=60&fit=crop&q=80",
-    description: "Gaming accessories",
   },
 ];
 
@@ -83,30 +56,6 @@ const features = [
   },
 ];
 
-const teamMembers = [
-  {
-    name: "Alex Chen",
-    role: "Founder & CEO",
-    avatar:
-      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face",
-    description: "Gaming enthusiast with 10+ years in the industry",
-  },
-  {
-    name: "Sarah Johnson",
-    role: "Head of Design",
-    avatar:
-      "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
-    description: "UI/UX expert specializing in gaming interfaces",
-  },
-  {
-    name: "Mike Rodriguez",
-    role: "Community Manager",
-    avatar:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-    description: "Professional gamer and content creator",
-  },
-];
-
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-background font-sans antialiased">
@@ -129,7 +78,7 @@ export default function AboutPage() {
           </p>
 
           {/* Trustpilot-style rating */}
-          <div className="flex items-center justify-center gap-2 mb-8">
+          {/* <div className="flex items-center justify-center gap-2 mb-8">
             <div className="flex items-center gap-1">
               {[...Array(5)].map((_, i) => (
                 <Star
@@ -141,7 +90,7 @@ export default function AboutPage() {
             <span className="text-sm text-muted-foreground">
               4.8 out of 5 based on 2,847 reviews
             </span>
-          </div>
+          </div> */}
           <Button variant="default" size="lg">
             Learn More
           </Button>
@@ -149,7 +98,7 @@ export default function AboutPage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 relative bg-green-accent-50 dark:bg-green-accent-950">
+      {/* <section className="py-16 relative bg-green-accent-50 dark:bg-green-accent-950">
         <div
           className="absolute inset-0 opacity-10"
           style={{
@@ -173,13 +122,13 @@ export default function AboutPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* What is Gamestash Section */}
       <section className="py-16">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
           <Badge variant="secondary" className="mb-4">
-            What is SkriptStore?
+            What is Gamestash?
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6 font-display">
             Gamestash is much more than a platform!
@@ -322,23 +271,26 @@ export default function AboutPage() {
                 for you.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button
-                  size="lg"
-                  className="bg-primary text-white hover:bg-primary/90 shadow-lg"
-                >
-                  Create Order
-                </Button>
-                <Button
+                <Link href="https://discord.gg/YhfMY3xXGg">
+                  {" "}
+                  <Button
+                    size="lg"
+                    className="bg-primary text-white hover:bg-primary/90 shadow-lg"
+                  >
+                    Create Order
+                  </Button>
+                </Link>
+                {/* <Button
                   size="lg"
                   variant="outline"
                   className="border-primary text-primary hover:bg-primary/10"
                 >
                   Read More
-                </Button>
+                </Button> */}
               </div>
             </div>
             {/* Images */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* <div className="grid grid-cols-2 gap-4">
               <Image
                 src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=300&h=200&fit=crop&q=80"
                 alt="Custom setup example 1"
@@ -367,7 +319,7 @@ export default function AboutPage() {
                 height={200}
                 className="rounded-xl shadow-lg object-cover aspect-video"
               />
-            </div>
+            </div> */}
           </div>
         </div>
       </section>
@@ -430,7 +382,7 @@ export default function AboutPage() {
               sell the perfect gaming battlestation.
             </p>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <span>© 2024 Gamestash. All rights reserved.</span>
+              <span>© 2025 Gamestash. All rights reserved.</span>
             </div>
           </div>
         </div>

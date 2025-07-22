@@ -5,8 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import ProductDetailsDialog from "@/components/admin/ProductDetailsDialog";
 import { Loader2 } from "lucide-react";
+import { Switch } from "../ui/switch";
 
 interface Product {
+  featured: boolean;
   id: string;
   title: string;
   status: string;
@@ -29,6 +31,7 @@ export default function ProductTable() {
   const [approveLoading, setApproveLoading] = useState<string | null>(null);
   const [rejectLoading, setRejectLoading] = useState<string | null>(null);
   const [removeLoading, setRemoveLoading] = useState<string | null>(null);
+  const [featuredLoading, setFeaturedLoading] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/products")
@@ -104,6 +107,7 @@ export default function ProductTable() {
                 <th className="p-2 text-left">Price</th>
                 <th className="p-2 text-left">Status</th>
                 <th className="p-2 text-left">Actions</th>
+                <th className="p-2 text-left">Featured</th>
               </tr>
             </thead>
             <tbody>
@@ -160,6 +164,42 @@ export default function ProductTable() {
                         ) : null}
                         Remove
                       </Button>
+                    </td>
+                    <td className="p-2">
+                      <div
+                        className="flex items-center gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Switch
+                          className="z-10"
+                          checked={p.featured}
+                          disabled={featuredLoading === p.id}
+                          onCheckedChange={async (checked) => {
+                            setFeaturedLoading(p.id);
+                            // Optimistic update
+                            setProducts((prev) =>
+                              prev.map((prod) =>
+                                prod.id === p.id
+                                  ? { ...prod, featured: checked }
+                                  : prod
+                              )
+                            );
+                            await fetch("/api/admin/products", {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                productId: p.id,
+                                featured: checked,
+                              }),
+                            });
+                            setFeaturedLoading(null);
+                          }}
+                          aria-label="Toggle featured"
+                        />
+                        {featuredLoading === p.id && (
+                          <Loader2 className="animate-spin w-4 h-4 text-muted-foreground" />
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

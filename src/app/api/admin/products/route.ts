@@ -27,11 +27,16 @@ export async function PATCH(request: NextRequest) {
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { productId, approved, rejected, adminComment } = await request.json();
-  await db
-    .update(products)
-    .set({ approved, rejected, adminComment })
-    .where(eq(products.id, productId));
+  const { productId, approved, rejected, adminComment, featured } =
+    await request.json();
+
+  const updateData: any = {};
+  if (approved !== undefined) updateData.approved = approved;
+  if (rejected !== undefined) updateData.rejected = rejected;
+  if (adminComment !== undefined) updateData.adminComment = adminComment;
+  if (featured !== undefined) updateData.featured = featured;
+
+  await db.update(products).set(updateData).where(eq(products.id, productId));
   return NextResponse.json({ success: true });
 }
 // DELETE: Remove product
