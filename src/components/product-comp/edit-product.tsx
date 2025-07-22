@@ -855,9 +855,9 @@ export function EditProductForm({
           </h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={handlePreview}>
+          {/* <Button variant="outline" onClick={handlePreview}>
             Preview
-          </Button>
+          </Button> */}
           <Button
             variant="outline"
             onClick={() => handleSubmit("draft")}

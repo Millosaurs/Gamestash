@@ -783,9 +783,9 @@ export function NewProductForm({
               <Eye className="w-4 h-4" />
             )}
           </Button>
-          <Button variant="outline" onClick={handlePreview}>
+          {/* <Button variant="outline" onClick={handlePreview}>
             Preview
-          </Button>
+          </Button> */}
           <Button
             variant="outline"
             onClick={() => handleSubmit("draft")}
