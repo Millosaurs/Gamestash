@@ -844,7 +844,7 @@ export function EditProductForm({
         </div>
       </Modal>
 
-      <div className="sticky top-0 z-30 bg-background flex flex-col gap-4 mb-6 border-b shadow">
+      <div className="flex flex-col gap-4 mb-6 sticky top-0 bg-background z-10 py-4 border-b">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={onClose}>
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -856,8 +856,8 @@ export function EditProductForm({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {/* <Button variant="outline" onClick={handlePreview}>
-            Preview
-          </Button> */}
+      Preview
+    </Button> */}
           <Button
             variant="outline"
             onClick={() => handleSubmit("draft")}
