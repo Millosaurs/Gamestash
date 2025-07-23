@@ -760,7 +760,7 @@ export function NewProductForm({
       </Modal>
 
       {/* Header */}
-      <div className="flex flex-col gap-4 mb-6 sticky">
+      <div className="sticky top-0 z-30 bg-background flex flex-col gap-4 mb-6 border-b shadow">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={onClose}>
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -784,8 +784,8 @@ export function NewProductForm({
             )}
           </Button>
           {/* <Button variant="outline" onClick={handlePreview}>
-            Preview
-          </Button> */}
+      Preview
+    </Button> */}
           <Button
             variant="outline"
             onClick={() => handleSubmit("draft")}
