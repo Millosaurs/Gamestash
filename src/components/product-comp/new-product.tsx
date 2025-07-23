@@ -760,7 +760,7 @@ export function NewProductForm({
       </Modal>
 
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-background flex flex-col gap-4 mb-6 border-b shadow">
+      <div className="flex flex-col gap-4 mb-6 sticky top-0 bg-background/95 backdrop-blur-sm z-10 py-4 border-b -mx-2 px-2 sm:-mx-4 sm:px-4 md:-mx-6 md:px-6">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={onClose}>
             <ArrowLeft className="w-4 h-4 mr-2" />
