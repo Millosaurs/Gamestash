@@ -1,12 +1,13 @@
 "use client";
 
-import { Sparkles, Star, Shield, CheckCircle, Zap, Award } from "lucide-react";
+import { Sparkles, Star, Shield, CheckCircle, Zap, Award, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/header";
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 const stats = [
   {
@@ -56,29 +57,95 @@ const features = [
   },
 ];
 
+// Animation variants
+const fadeIn = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.6 }
+  }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2
+    }
+  }
+};
+
+const cardHover = {
+  rest: { scale: 1, boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)" },
+  hover: { 
+    scale: 1.03, 
+    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+    transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1.0] }
+  }
+};
+
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-background font-sans antialiased">
+    <div className="min-h-screen bg-background font-sans antialiased overflow-hidden">
       {/* Header */}
       <Header />
 
       {/* Hero Section */}
-      <section className="py-20 bg-background">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
-          <Badge className="mb-4 bg-primary text-primary-foreground border-0">
-            About us
-          </Badge>
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6 font-display">
-            Built for gamers, by <span className="text-primary">gamers!</span>
-          </h1>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
+      <motion.section 
+        initial="hidden"
+        animate="visible"
+        variants={fadeIn}
+        className="py-24 bg-background relative"
+      >
+        {/* Decorative elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        </div>
+        
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Badge className="mb-4 bg-primary text-primary-foreground border-0 px-3 py-1 text-sm animate-pulse-subtle">
+              About us
+            </Badge>
+          </motion.div>
+          
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+            className="text-4xl md:text-6xl font-bold text-foreground mb-6 font-display tracking-tight"
+          >
+            Built for gamers, by <span className="text-primary relative inline-block">
+              gamers!
+              <span className="absolute bottom-0 left-0 w-full h-1 bg-primary/30 rounded-full"></span>
+            </span>
+          </motion.h1>
+          
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+            className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed"
+          >
             We have a vision to create a marketplace where we gather the most
             talented gaming setup creators and share their valuable products for
             the benefit of all gamers.
-          </p>
+          </motion.p>
 
           {/* Trustpilot-style rating */}
-          {/* <div className="flex items-center justify-center gap-2 mb-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.6 }}
+            className="flex items-center justify-center gap-2 mb-8"
+          >
             <div className="flex items-center gap-1">
               {[...Array(5)].map((_, i) => (
                 <Star
@@ -90,12 +157,22 @@ export default function AboutPage() {
             <span className="text-sm text-muted-foreground">
               4.8 out of 5 based on 2,847 reviews
             </span>
-          </div> */}
-          <Button variant="default" size="lg">
-            Learn More
-          </Button>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.6 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button variant="default" size="lg" className="group">
+              Learn More
+              <ArrowRight className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Stats Section */}
       {/* <section className="py-16 relative bg-green-accent-50 dark:bg-green-accent-950">
@@ -125,24 +202,55 @@ export default function AboutPage() {
       </section> */}
 
       {/* What is Gamestash Section */}
-      <section className="py-16">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
-          <Badge variant="secondary" className="mb-4">
-            What is Gamestash?
-          </Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6 font-display">
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={fadeIn}
+        className="py-24 relative"
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/20 to-background pointer-events-none" />
+        
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <Badge variant="secondary" className="mb-4 px-3 py-1 text-sm">
+              What is Gamestash?
+            </Badge>
+          </motion.div>
+          
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+            className="text-3xl md:text-5xl font-bold text-foreground mb-6 font-display tracking-tight"
+          >
             Gamestash is much more than a platform!
-          </h2>
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            Gamestash is a platform that sells everything that goes into the
-            perfect gaming setup. On our marketplace you can buy products within
-            several different categories, and from several different skilled
-            creators and developers. From RGB lighting configurations to
-            complete battlestation blueprints, we have everything you need to
-            create your dream gaming environment.
-          </p>
+          </motion.h2>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+            className="relative p-6 bg-card/50 backdrop-blur-sm rounded-xl border border-border/50 shadow-sm"
+          >
+            <p className="text-lg text-muted-foreground leading-relaxed">
+              Gamestash is a platform that sells everything that goes into the
+              perfect gaming setup. On our marketplace you can buy products within
+              several different categories, and from several different skilled
+              creators and developers. From RGB lighting configurations to
+              complete battlestation blueprints, we have everything you need to
+              create your dream gaming environment.
+            </p>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Trusted Partners */}
       {/* <section className="py-16 bg-muted/20">
@@ -178,14 +286,28 @@ export default function AboutPage() {
       </section> */}
 
       {/* Why Choose Us */}
-      <section className="py-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <Badge variant="outline" className="mb-4">
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={staggerContainer}
+        className="py-24 relative"
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/10 to-background pointer-events-none" />
+        
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+          <motion.div 
+            variants={fadeIn}
+            className="text-center mb-16"
+          >
+            <Badge variant="outline" className="mb-4 px-3 py-1 text-sm">
               Why choose products from Gamestash?
             </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6 font-display">
-              With us you are always in safe hands.
+            <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6 font-display tracking-tight">
+              With us you are always in <span className="text-primary relative inline-block">
+                safe hands
+                <span className="absolute bottom-0 left-0 w-full h-1 bg-primary/30 rounded-full"></span>
+              </span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               We sell plugins, ready-made setups, configurations & quality
@@ -193,74 +315,171 @@ export default function AboutPage() {
               quality checked and verified. You can therefore expect that the
               products just work, and you get what you pay for.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+          <motion.div 
+            variants={staggerContainer}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16"
+          >
             {features.map((feature, index) => (
-              <Card
+              <motion.div
                 key={index}
-                className="text-center hover:shadow-lg transition-shadow duration-200"
+                variants={fadeIn}
+                whileHover="hover"
+                initial="rest"
+                animate="rest"
               >
-                <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <feature.icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-foreground mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {feature.description}
-                  </p>
-                </CardContent>
-              </Card>
+                <motion.div 
+                  whileHover={{ 
+                    scale: 1.03,
+                    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                    transition: {
+                      duration: 0.3,
+                      ease: "easeOut"
+                    }
+                  }}
+                  initial={{
+                    scale: 1,
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
+                  }}
+                >
+                  <Card className="text-center h-full border border-border/50 overflow-hidden group">
+                    <CardContent className="p-8 flex flex-col h-full">
+                      <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/20 transition-colors duration-300">
+                        <feature.icon className="w-8 h-8 text-primary group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-foreground mb-3">
+                        {feature.title}
+                      </h3>
+                      <p className="text-muted-foreground">
+                        {feature.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
-          <div className="text-center">
-            <p className="text-muted-foreground mb-6">
+          <motion.div 
+            variants={fadeIn}
+            className="text-center bg-card/50 backdrop-blur-sm rounded-xl border border-border/50 p-8 shadow-sm"
+          >
+            <p className="text-lg text-muted-foreground">
               All developers have gone through a longer process to become
               "Verified" - at the same time, each individual product is reviewed
               so that we can ensure the quality we want,{" "}
-              <strong>every time!</strong>
+              <strong className="text-primary font-semibold">every time!</strong>
             </p>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Custom Orders Section */}
-      <section className="relative py-20 bg-gradient-to-br from-[#18181b] via-[#23272f] to-[#1e293b] overflow-hidden">
-        {/* Optional: Decorative background shapes */}
-        <div className="absolute inset-0 pointer-events-none">
-          <svg
-            className="absolute top-0 right-0 opacity-20"
-            width="400"
-            height="400"
-            fill="none"
-            viewBox="0 0 400 400"
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={fadeIn}
+        className="relative py-24 bg-gradient-to-br from-[#18181b] via-[#23272f] to-[#1e293b] overflow-hidden"
+      >
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <motion.div
+            animate={{ 
+              rotate: 360,
+              scale: [1, 1.1, 1],
+            }}
+            transition={{ 
+              duration: 20, 
+              repeat: Infinity,
+              repeatType: "loop",
+              ease: "linear" 
+            }}
+            className="absolute -top-40 -right-40 w-96 h-96"
           >
-            <circle cx="200" cy="200" r="200" fill="#22d3ee" />
-          </svg>
+            <svg
+              className="w-full h-full opacity-20"
+              viewBox="0 0 400 400"
+              fill="none"
+            >
+              <circle cx="200" cy="200" r="200" fill="url(#gradient1)" />
+              <defs>
+                <radialGradient id="gradient1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(200 200) rotate(90) scale(200)">
+                  <stop stopColor="#22d3ee" />
+                  <stop offset="1" stopColor="#22d3ee" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+            </svg>
+          </motion.div>
+          
+          <motion.div
+            animate={{ 
+              rotate: -360,
+              scale: [1, 1.2, 1],
+            }}
+            transition={{ 
+              duration: 25, 
+              repeat: Infinity,
+              repeatType: "loop",
+              ease: "linear" 
+            }}
+            className="absolute -bottom-20 -left-20 w-80 h-80"
+          >
+            <svg
+              className="w-full h-full opacity-10"
+              viewBox="0 0 400 400"
+              fill="none"
+            >
+              <circle cx="200" cy="200" r="200" fill="url(#gradient2)" />
+              <defs>
+                <radialGradient id="gradient2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(200 200) rotate(90) scale(200)">
+                  <stop stopColor="#1eb01a" />
+                  <stop offset="1" stopColor="#1eb01a" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+            </svg>
+          </motion.div>
         </div>
 
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Text Card */}
-            <div className="bg-white/5 backdrop-blur-md rounded-2xl shadow-xl p-10 border border-white/10">
-              <div className="flex items-center gap-3 mb-4">
-                <svg
-                  className="w-8 h-8 text-primary"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="bg-white/5 backdrop-blur-md rounded-2xl shadow-xl p-10 border border-white/10 hover:border-white/20 transition-colors duration-300"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <motion.div
+                  animate={{ 
+                    rotate: [0, 15, -15, 0],
+                    scale: [1, 1.1, 1]
+                  }}
+                  transition={{ 
+                    duration: 5, 
+                    repeat: Infinity,
+                    repeatType: "loop" 
+                  }}
+                  className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center"
                 >
-                  <path
-                    d="M12 2v2m0 16v2m10-10h-2M4 12H2m15.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.02 0l1.41-1.41M6.34 6.34L4.93 4.93"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <h2 className="text-3xl md:text-4xl font-bold text-white font-display">
+                  <svg
+                    className="w-6 h-6 text-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M12 2v2m0 16v2m10-10h-2M4 12H2m15.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.02 0l1.41-1.41M6.34 6.34L4.93 4.93"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </motion.div>
+                <h2 className="text-3xl md:text-4xl font-bold text-white font-display tracking-tight">
                   Custom Orders
                 </h2>
               </div>
@@ -272,57 +491,94 @@ export default function AboutPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="https://discord.gg/YhfMY3xXGg">
-                  {" "}
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button
+                      size="lg"
+                      className="bg-primary text-white hover:bg-primary/90 shadow-lg group"
+                    >
+                      Create Order
+                      <ArrowRight className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </motion.div>
+                </Link>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
                   <Button
                     size="lg"
-                    className="bg-primary text-white hover:bg-primary/90 shadow-lg"
+                    variant="outline"
+                    className="border-primary/50 text-primary hover:bg-primary/10 hover:border-primary"
                   >
-                    Create Order
+                    Read More
                   </Button>
-                </Link>
-                {/* <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-primary text-primary hover:bg-primary/10"
-                >
-                  Read More
-                </Button> */}
+                </motion.div>
               </div>
-            </div>
-            {/* Images */}
-            {/* <div className="grid grid-cols-2 gap-4">
-              <Image
-                src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=300&h=200&fit=crop&q=80"
-                alt="Custom setup example 1"
-                width={300}
-                height={200}
-                className="rounded-xl shadow-lg object-cover aspect-video"
-              />
-              <Image
-                src="https://images.unsplash.com/photo-1547394765-185e1e68f34e?w=300&h=200&fit=crop&q=80"
-                alt="Custom setup example 2"
-                width={300}
-                height={200}
-                className="rounded-xl shadow-lg object-cover aspect-video"
-              />
-              <Image
-                src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=300&h=200&fit=crop&q=80"
-                alt="Custom setup example 3"
-                width={300}
-                height={200}
-                className="rounded-xl shadow-lg object-cover aspect-video"
-              />
-              <Image
-                src="https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=300&h=200&fit=crop&q=80"
-                alt="Custom setup example 4"
-                width={300}
-                height={200}
-                className="rounded-xl shadow-lg object-cover aspect-video"
-              />
-            </div> */}
+            </motion.div>
+            
+            {/* Images Grid */}
+            <motion.div 
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="grid grid-cols-2 gap-4 hidden lg:grid"
+            >
+              <motion.div
+                whileHover={{ y: -5, scale: 1.02 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Image
+                  src="/placeholder.jpg"
+                  alt="Custom setup example 1"
+                  width={300}
+                  height={200}
+                  className="rounded-xl shadow-lg object-cover aspect-video border border-white/10 hover:border-white/30 transition-colors duration-300"
+                />
+              </motion.div>
+              <motion.div
+                whileHover={{ y: -5, scale: 1.02 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Image
+                  src="/placeholder.jpg"
+                  alt="Custom setup example 2"
+                  width={300}
+                  height={200}
+                  className="rounded-xl shadow-lg object-cover aspect-video border border-white/10 hover:border-white/30 transition-colors duration-300"
+                />
+              </motion.div>
+              <motion.div
+                whileHover={{ y: -5, scale: 1.02 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Image
+                  src="/placeholder.jpg"
+                  alt="Custom setup example 3"
+                  width={300}
+                  height={200}
+                  className="rounded-xl shadow-lg object-cover aspect-video border border-white/10 hover:border-white/30 transition-colors duration-300"
+                />
+              </motion.div>
+              <motion.div
+                whileHover={{ y: -5, scale: 1.02 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Image
+                  src="/placeholder.jpg"
+                  alt="Custom setup example 4"
+                  width={300}
+                  height={200}
+                  className="rounded-xl shadow-lg object-cover aspect-video border border-white/10 hover:border-white/30 transition-colors duration-300"
+                />
+              </motion.div>
+            </motion.div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Team Section */}
       {/* <section className="py-16">
@@ -366,27 +622,62 @@ export default function AboutPage() {
       </section> */}
 
       {/* Footer */}
-      <footer className="border-t border-border/40 bg-muted/20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+      <motion.footer 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        variants={fadeIn}
+        className="border-t border-border/40 bg-muted/20"
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center flex flex-col items-center">
-            <div className="flex items-center justify-center space-x-3 mb-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary">
-                <Sparkles className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <span className="font-bold text-xl text-foreground font-display">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="flex items-center justify-center space-x-3 mb-6"
+            >
+              <motion.div 
+                animate={{ 
+                  scale: [1, 1.1, 1],
+                  rotate: [0, 5, -5, 0]
+                }}
+                transition={{ 
+                  duration: 4, 
+                  repeat: Infinity,
+                  repeatType: "loop" 
+                }}
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary"
+              >
+                <Sparkles className="h-6 w-6 text-primary-foreground" />
+              </motion.div>
+              <span className="font-bold text-2xl text-foreground font-display tracking-tight">
                 Gamestash
               </span>
-            </div>
-            <p className="text-muted-foreground mb-6 max-w-md">
+            </motion.div>
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="text-muted-foreground mb-8 max-w-md text-lg"
+            >
               The ultimate marketplace for gaming setups. Discover, buy, and
               sell the perfect gaming battlestation.
-            </p>
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+            </motion.p>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+              className="flex items-center gap-6 text-sm text-muted-foreground"
+            >
               <span>© 2025 Gamestash. All rights reserved.</span>
-            </div>
+            </motion.div>
           </div>
         </div>
-      </footer>
+      </motion.footer>
     </div>
   );
 }
