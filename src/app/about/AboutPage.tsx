@@ -1,6 +1,14 @@
 "use client";
 
-import { Sparkles, Star, Shield, CheckCircle, Zap, Award, ArrowRight } from "lucide-react";
+import {
+  Sparkles,
+  Star,
+  Shield,
+  CheckCircle,
+  Zap,
+  Award,
+  ArrowRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,15 +41,15 @@ const stats = [
 const features = [
   {
     icon: Shield,
-    title: "Verified Quality",
+    title: "Report a problem",
     description:
-      "Every setup goes through our rigorous quality verification process before being listed.",
+      "You can report a problem regarding a product to help keep the platform safe.",
   },
   {
     icon: CheckCircle,
-    title: "Trusted Sellers",
+    title: "Developer’s Rating",
     description:
-      "All our developers are verified professionals with proven track records.",
+      "You can always check the developer’s rating before buying from them. Please be aware that developers are not manually verified by Gamestash.",
   },
   {
     icon: Zap,
@@ -53,18 +61,18 @@ const features = [
     icon: Award,
     title: "Premium Support",
     description:
-      "24/7 customer support to help you with any questions or issues.",
+      "Customer support is available to help you with any questions or issues.",
   },
 ];
 
 // Animation variants
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
-    transition: { duration: 0.6 }
-  }
+    transition: { duration: 0.6 },
+  },
 };
 
 const staggerContainer = {
@@ -72,18 +80,23 @@ const staggerContainer = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.2
-    }
-  }
+      staggerChildren: 0.2,
+    },
+  },
 };
 
 const cardHover = {
-  rest: { scale: 1, boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)" },
-  hover: { 
-    scale: 1.03, 
-    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-    transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1.0] }
-  }
+  rest: {
+    scale: 1,
+    boxShadow:
+      "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+  },
+  hover: {
+    scale: 1.03,
+    boxShadow:
+      "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+    transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1.0] },
+  },
 };
 
 export default function AboutPage() {
@@ -93,7 +106,7 @@ export default function AboutPage() {
       <Header />
 
       {/* Hero Section */}
-      <motion.section 
+      <motion.section
         initial="hidden"
         animate="visible"
         variants={fadeIn}
@@ -104,7 +117,7 @@ export default function AboutPage() {
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
           <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         </div>
-        
+
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -115,20 +128,21 @@ export default function AboutPage() {
               About us
             </Badge>
           </motion.div>
-          
-          <motion.h1 
+
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
             className="text-4xl md:text-6xl font-bold text-foreground mb-6 font-display tracking-tight"
           >
-            Built for gamers, by <span className="text-primary relative inline-block">
+            Built for gamers, by{" "}
+            <span className="text-primary relative inline-block">
               gamers!
               <span className="absolute bottom-0 left-0 w-full h-1 bg-primary/30 rounded-full"></span>
             </span>
           </motion.h1>
-          
-          <motion.p 
+
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
@@ -140,7 +154,7 @@ export default function AboutPage() {
           </motion.p>
 
           {/* Trustpilot-style rating */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.6 }}
@@ -158,19 +172,14 @@ export default function AboutPage() {
               4.8 out of 5 based on 2,847 reviews
             </span>
           </motion.div>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.6 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-          >
-            <Button variant="default" size="lg" className="group">
-              Learn More
-              <ArrowRight className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </motion.div>
+          ></motion.div>
         </div>
       </motion.section>
 
@@ -202,7 +211,7 @@ export default function AboutPage() {
       </section> */}
 
       {/* What is Gamestash Section */}
-      <motion.section 
+      <motion.section
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
@@ -210,7 +219,7 @@ export default function AboutPage() {
         className="py-24 relative"
       >
         <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/20 to-background pointer-events-none" />
-        
+
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -222,8 +231,8 @@ export default function AboutPage() {
               What is Gamestash?
             </Badge>
           </motion.div>
-          
-          <motion.h2 
+
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -232,7 +241,7 @@ export default function AboutPage() {
           >
             Gamestash is much more than a platform!
           </motion.h2>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -241,12 +250,11 @@ export default function AboutPage() {
             className="relative p-6 bg-card/50 backdrop-blur-sm rounded-xl border border-border/50 shadow-sm"
           >
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Gamestash is a platform that sells everything that goes into the
-              perfect gaming setup. On our marketplace you can buy products within
-              several different categories, and from several different skilled
-              creators and developers. From RGB lighting configurations to
-              complete battlestation blueprints, we have everything you need to
-              create your dream gaming environment.
+              Gamestash is a platform that offers easy ways to set up your
+              server. We help connect the developers of these setups with you,
+              to help the gaming community grow stronger! We offer products
+              ranging from free to premium, and many of these have had
+              significant time and effort put into them.
             </p>
           </motion.div>
         </div>
@@ -286,7 +294,7 @@ export default function AboutPage() {
       </section> */}
 
       {/* Why Choose Us */}
-      <motion.section 
+      <motion.section
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
@@ -294,30 +302,29 @@ export default function AboutPage() {
         className="py-24 relative"
       >
         <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/10 to-background pointer-events-none" />
-        
+
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div 
-            variants={fadeIn}
-            className="text-center mb-16"
-          >
+          <motion.div variants={fadeIn} className="text-center mb-16">
             <Badge variant="outline" className="mb-4 px-3 py-1 text-sm">
               Why choose products from Gamestash?
             </Badge>
             <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6 font-display tracking-tight">
-              With us you are always in <span className="text-primary relative inline-block">
+              With us you are always in{" "}
+              <span className="text-primary relative inline-block">
                 safe hands
                 <span className="absolute bottom-0 left-0 w-full h-1 bg-primary/30 rounded-full"></span>
               </span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              We sell plugins, ready-made setups, configurations & quality
-              guides that just work. All products that are put up for sale are
-              quality checked and verified. You can therefore expect that the
-              products just work, and you get what you pay for.
+              We sell plugins, setups, configurations, and guides made to help
+              your server grow. Please note: While we do our best to keep the
+              platform clean, all products are uploaded by individual developers
+              and are not manually scanned or verified for harmful content.
+              Always use your own judgment before downloading.
             </p>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             variants={staggerContainer}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16"
           >
@@ -329,18 +336,20 @@ export default function AboutPage() {
                 initial="rest"
                 animate="rest"
               >
-                <motion.div 
-                  whileHover={{ 
+                <motion.div
+                  whileHover={{
                     scale: 1.03,
-                    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                    boxShadow:
+                      "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
                     transition: {
                       duration: 0.3,
-                      ease: "easeOut"
-                    }
+                      ease: "easeOut",
+                    },
                   }}
                   initial={{
                     scale: 1,
-                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
+                    boxShadow:
+                      "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
                   }}
                 >
                   <Card className="text-center h-full border border-border/50 overflow-hidden group">
@@ -361,22 +370,21 @@ export default function AboutPage() {
             ))}
           </motion.div>
 
-          <motion.div 
+          <motion.div
             variants={fadeIn}
             className="text-center bg-card/50 backdrop-blur-sm rounded-xl border border-border/50 p-8 shadow-sm"
           >
             <p className="text-lg text-muted-foreground">
-              All developers have gone through a longer process to become
-              "Verified" - at the same time, each individual product is reviewed
-              so that we can ensure the quality we want,{" "}
-              <strong className="text-primary font-semibold">every time!</strong>
+              We strive to keep our platform a safe place. If you experience any
+              issues or believe a product is harmful or misleading, please
+              contact us or use the report feature.
             </p>
           </motion.div>
         </div>
       </motion.section>
 
       {/* Custom Orders Section */}
-      <motion.section 
+      <motion.section
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
@@ -386,15 +394,15 @@ export default function AboutPage() {
         {/* Decorative background elements */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <motion.div
-            animate={{ 
+            animate={{
               rotate: 360,
               scale: [1, 1.1, 1],
             }}
-            transition={{ 
-              duration: 20, 
+            transition={{
+              duration: 20,
               repeat: Infinity,
               repeatType: "loop",
-              ease: "linear" 
+              ease: "linear",
             }}
             className="absolute -top-40 -right-40 w-96 h-96"
           >
@@ -405,24 +413,31 @@ export default function AboutPage() {
             >
               <circle cx="200" cy="200" r="200" fill="url(#gradient1)" />
               <defs>
-                <radialGradient id="gradient1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(200 200) rotate(90) scale(200)">
+                <radialGradient
+                  id="gradient1"
+                  cx="0"
+                  cy="0"
+                  r="1"
+                  gradientUnits="userSpaceOnUse"
+                  gradientTransform="translate(200 200) rotate(90) scale(200)"
+                >
                   <stop stopColor="#22d3ee" />
                   <stop offset="1" stopColor="#22d3ee" stopOpacity="0" />
                 </radialGradient>
               </defs>
             </svg>
           </motion.div>
-          
+
           <motion.div
-            animate={{ 
+            animate={{
               rotate: -360,
               scale: [1, 1.2, 1],
             }}
-            transition={{ 
-              duration: 25, 
+            transition={{
+              duration: 25,
               repeat: Infinity,
               repeatType: "loop",
-              ease: "linear" 
+              ease: "linear",
             }}
             className="absolute -bottom-20 -left-20 w-80 h-80"
           >
@@ -433,7 +448,14 @@ export default function AboutPage() {
             >
               <circle cx="200" cy="200" r="200" fill="url(#gradient2)" />
               <defs>
-                <radialGradient id="gradient2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(200 200) rotate(90) scale(200)">
+                <radialGradient
+                  id="gradient2"
+                  cx="0"
+                  cy="0"
+                  r="1"
+                  gradientUnits="userSpaceOnUse"
+                  gradientTransform="translate(200 200) rotate(90) scale(200)"
+                >
                   <stop stopColor="#1eb01a" />
                   <stop offset="1" stopColor="#1eb01a" stopOpacity="0" />
                 </radialGradient>
@@ -454,14 +476,14 @@ export default function AboutPage() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <motion.div
-                  animate={{ 
+                  animate={{
                     rotate: [0, 15, -15, 0],
-                    scale: [1, 1.1, 1]
+                    scale: [1, 1.1, 1],
                   }}
-                  transition={{ 
-                    duration: 5, 
+                  transition={{
+                    duration: 5,
                     repeat: Infinity,
-                    repeatType: "loop" 
+                    repeatType: "loop",
                   }}
                   className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center"
                 >
@@ -485,9 +507,8 @@ export default function AboutPage() {
               </div>
               <p className="text-lg text-slate-200 mb-8 leading-relaxed">
                 Get your very own gaming setup designed to your exact needs! Our
-                expert developers can create custom configurations, lighting
-                setups, and complete battlestation designs tailored specifically
-                for you.
+                expert developers can create custom configurations, setups,
+                plugins, and much more tailored specifically for you.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="https://discord.gg/YhfMY3xXGg">
@@ -504,23 +525,11 @@ export default function AboutPage() {
                     </Button>
                   </motion.div>
                 </Link>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="border-primary/50 text-primary hover:bg-primary/10 hover:border-primary"
-                  >
-                    Read More
-                  </Button>
-                </motion.div>
               </div>
             </motion.div>
-            
+
             {/* Images Grid */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -622,7 +631,7 @@ export default function AboutPage() {
       </section> */}
 
       {/* Footer */}
-      <motion.footer 
+      <motion.footer
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true }}
@@ -631,22 +640,22 @@ export default function AboutPage() {
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center flex flex-col items-center">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
               className="flex items-center justify-center space-x-3 mb-6"
             >
-              <motion.div 
-                animate={{ 
+              <motion.div
+                animate={{
                   scale: [1, 1.1, 1],
-                  rotate: [0, 5, -5, 0]
+                  rotate: [0, 5, -5, 0],
                 }}
-                transition={{ 
-                  duration: 4, 
+                transition={{
+                  duration: 4,
                   repeat: Infinity,
-                  repeatType: "loop" 
+                  repeatType: "loop",
                 }}
                 className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary"
               >
@@ -656,7 +665,7 @@ export default function AboutPage() {
                 Gamestash
               </span>
             </motion.div>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -666,7 +675,7 @@ export default function AboutPage() {
               The ultimate marketplace for gaming setups. Discover, buy, and
               sell the perfect gaming battlestation.
             </motion.p>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
