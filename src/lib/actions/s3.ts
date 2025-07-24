@@ -15,6 +15,8 @@ const ALLOWED_TYPES = [
   "multipart/x-zip",
   "application/octet-stream",
   "application/x-rar-compressed",
+  "application/java-archive",
+  "",
 ];
 
 const s3 = new S3Client({

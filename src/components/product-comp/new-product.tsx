@@ -39,7 +39,7 @@ import { deleteS3Object } from "@/lib/actions/s3";
 import { getCloudinaryPublicId } from "@/lib/utils/cloudinary";
 import { deleteCloudinaryImageAction } from "@/lib/actions/deleteCloudinaryImage";
 
-const ALLOWED_EXTENSIONS = [".zip", ".rar"];
+const ALLOWED_EXTENSIONS = [".zip", ".rar", ".jar", ".sk"];
 const MAX_SIZE = 100 * 1024 * 1024; // 100MB
 
 // Simple modal for cropping
@@ -93,7 +93,7 @@ function FileUploadCard({
     },
   ] = useFileUpload({
     maxSize: MAX_SIZE,
-    accept: ".zip,.rar",
+    accept: ".zip,.rar,.sk,.jar",
     initialFiles: [],
   });
 
@@ -113,7 +113,7 @@ function FileUploadCard({
       }
       const ext = file.name.split(".").pop()?.toLowerCase();
       if (!ext || !ALLOWED_EXTENSIONS.includes(`.${ext}`)) {
-        toast.error("Only .zip and .rar files are allowed!");
+        toast.error("Only .zip, .sk, .jar and .rar files are allowed!");
         removeFile(files[0].id);
         return;
       }
@@ -282,7 +282,7 @@ function FileUploadCard({
         )}
 
         <p className="text-xs text-muted-foreground mt-2">
-          Allowed: .RAR & .ZIP // Max 100MB.
+          Allowed: .zip, .sk, .jar and .rar // Max 100MB.
         </p>
       </CardContent>
     </Card>
@@ -760,7 +760,7 @@ export function NewProductForm({
       </Modal>
 
       {/* Header */}
-      <div className="flex flex-col gap-4 mb-6 sticky top-0 bg-background/95 backdrop-blur-sm z-10 py-4 border-b -mx-2 px-2 sm:-mx-4 sm:px-4 md:-mx-6 md:px-6">
+      <div className="flex flex-col gap-4 mb-6 ">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={onClose}>
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -1147,6 +1147,31 @@ export function NewProductForm({
             />
           </div>
         )}
+      </div>
+      <div className="py-4 space-x-3">
+        {" "}
+        <Button
+          variant="outline"
+          onClick={() => handleSubmit("draft")}
+          disabled={isLoading}
+        >
+          Save Draft
+        </Button>
+        <Button
+          onClick={() => handleSubmit("published")}
+          disabled={
+            isLoading ||
+            !formData.title ||
+            !formData.description ||
+            !formData.price
+          }
+        >
+          {isLoading ? (
+            <Loader2 className="animate-spin w-4 h-4 " />
+          ) : (
+            "Publish"
+          )}
+        </Button>
       </div>
     </div>
   );
