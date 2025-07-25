@@ -17,27 +17,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
-const stats = [
-  {
-    number: "12.5k+",
-    label: "Satisfied Customers",
-    description:
-      "We have helped 12,500+ gamers find their perfect setup since our launch",
-  },
-  {
-    number: "5+",
-    label: "Years of Experience",
-    description:
-      "Half a decade of expertise in gaming setup curation and marketplace innovation",
-  },
-  {
-    number: "25k+",
-    label: "Discord Members",
-    description:
-      "Join our thriving community of gaming enthusiasts and setup creators",
-  },
-];
-
 const features = [
   {
     icon: Shield,
@@ -154,7 +133,7 @@ export default function AboutPage() {
           </motion.p>
 
           {/* Trustpilot-style rating */}
-          <motion.div
+          {/* <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.6 }}
@@ -171,7 +150,7 @@ export default function AboutPage() {
             <span className="text-sm text-muted-foreground">
               4.8 out of 5 based on 2,847 reviews
             </span>
-          </motion.div>
+          </motion.div> */}
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
