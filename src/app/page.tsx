@@ -66,6 +66,11 @@ const gameCategories = [
     img: "https://images.unsplash.com/photo-1542751110-97427bbecf20?w=500&h=300&fit=crop&q=80",
     gradient: "from-purple-500/80 to-pink-500/80",
   },
+  {
+    name: "Websites",
+    img: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=1055&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    gradient: "from-blue-500/80  to-purple-500/80",
+  },
 ];
 
 export default function LandingPage() {
@@ -202,7 +207,7 @@ export default function LandingPage() {
               Explore All &rarr;
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 w-full justify-center">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4 w-full justify-center">
             {gameCategories.map((cat) => (
               <Link
                 key={cat.name}
@@ -352,7 +357,7 @@ export default function LandingPage() {
           <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
             By clicking continue, you agree to our{" "}
             <a href="/tos">Terms of Service</a> and{" "}
-            <a href="#">Privacy Policy</a>.
+            <a href="/p&p">Privacy Policy</a>.
           </div>
           <div className="mt-8 text-xs text-muted-foreground text-center">
             &copy; {new Date().getFullYear()} Gamestash. All rights reserved.
