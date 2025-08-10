@@ -445,7 +445,7 @@ export default function ExplorePage() {
       </section>
 
       {/* Filters Bar */}
-      <section className="py-8 border-b border-border/50">
+      <section className="py-8 ">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="flex flex-col sm:flex-row gap-4 flex-1">
@@ -476,8 +476,10 @@ export default function ExplorePage() {
               </div>
               {/* Games Filter */}
               <Select
-                value={selectedGames[0] || ""}
-                onValueChange={(v) => handleGameFilter(v)}
+                value="" // Always reset after selection
+                onValueChange={(v) => {
+                  handleGameFilter(v);
+                }}
               >
                 <SelectTrigger className="w-40 bg-background/50 backdrop-blur-sm border-border/50">
                   <Grid3X3 className="h-4 w-4 mr-2" />
@@ -491,10 +493,13 @@ export default function ExplorePage() {
                   ))}
                 </SelectContent>
               </Select>
+
               {/* Categories Filter */}
               <Select
-                value={selectedCategories[0] || ""}
-                onValueChange={(v) => handleCategoryFilter(v)}
+                value="" // Always reset after selection
+                onValueChange={(v) => {
+                  handleCategoryFilter(v);
+                }}
               >
                 <SelectTrigger className="w-40 bg-background/50 backdrop-blur-sm border-border/50">
                   <List className="h-4 w-4 mr-2" />
@@ -524,7 +529,7 @@ export default function ExplorePage() {
               </Select>
             </div>
             {/* View Mode Toggle */}
-            <div className="flex items-center gap-2 bg-background/50 backdrop-blur-sm rounded-lg p-1 border border-border/50">
+            <div className="flex items-center gap-2 bg-background/50 backdrop-blur-sm rounded-lg p-1 ">
               <Button
                 variant={viewMode === "grid" ? "default" : "ghost"}
                 size="sm"
@@ -561,7 +566,10 @@ export default function ExplorePage() {
                 {game?.name}
                 <X
                   className="h-3 w-3 cursor-pointer"
-                  onClick={() => handleGameFilter(gameId)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleGameFilter(gameId);
+                  }}
                 />
               </Badge>
             );
@@ -573,7 +581,10 @@ export default function ExplorePage() {
                 {category?.name}
                 <X
                   className="h-3 w-3 cursor-pointer"
-                  onClick={() => handleCategoryFilter(categoryId)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent triggering card clicks
+                    handleCategoryFilter(categoryId);
+                  }}
                 />
               </Badge>
             );
