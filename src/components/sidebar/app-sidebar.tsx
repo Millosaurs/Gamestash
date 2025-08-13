@@ -11,6 +11,7 @@ import {
   SquareTerminal,
   Gamepad,
 } from "lucide-react";
+import { IconBrandDiscord } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/sidebar/nav-main";
 import { NavSecondary } from "@/components/sidebar/nav-secondary";
@@ -132,8 +133,8 @@ const data = {
   navSecondary: [
     {
       title: "Support",
-      url: "#",
-      icon: LifeBuoy,
+      url: "https://discord.gg/4vk7xZjuee",
+      icon: IconBrandDiscord,
     },
     {
       title: "Connect",
