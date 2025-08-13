@@ -134,7 +134,8 @@ const data = {
     {
       title: "Support",
       url: "https://discord.gg/4vk7xZjuee",
-      icon: IconBrandDiscord,
+      icon: LifeBuoy,
+      external: true,
     },
     {
       title: "Connect",
